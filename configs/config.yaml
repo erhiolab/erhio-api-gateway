@@ -1,0 +1,44 @@
+# 网关配置
+gateway:
+    # 监听端口
+    port: 8080
+
+# 日志配置
+logger:
+    # 日志输出方式
+    output: "stdout"
+    # 系统日志文件路径
+    logPath: "logs/api-gateway.log"
+    # 请求日志文件路径
+    requestLogPath: "logs/request.log"
+    # 日志文件最大大小(MB)
+    maxSize: 100
+    # 日志文件最大备份数量
+    maxBackups: 10
+    # 日志文件最大年龄(天)
+    maxAge: 30
+    # 是否压缩日志文件
+    compress: true
+
+# 路由配置
+routes:
+    -   path: "/api/user"
+        method: "GET"
+        service: "user-service"
+        requireAuth: false
+        rateLimit: false
+#    -   path: "/api/order"
+#        method: "POST"
+#        service: "order-service"
+#        requireAuth: true
+#        rateLimit: true
+
+# 服务配置
+services:
+    -   name: "user-service"
+        nodes:
+            - "http://localhost:3000"
+#    -   name: "order-service"
+#        nodes:
+#            - "http://localhost:3001"
+

@@ -2,25 +2,40 @@ package gateway
 
 import (
 	"elake-api-gateway/internal/config"
+	"elake-api-gateway/internal/middleware"
 	"net/http"
 )
 
-// CoreHandler 处理请求
-func CoreHandler(w http.ResponseWriter, r *http.Request) {
+// Handler 处理请求
+func Handler(w http.ResponseWriter, r *http.Request) {
 	route := matchRoute(r.URL.Path, r.Method)
 	// 404 - 未匹配到路由
 	if route == nil {
 		http.NotFound(w, r)
 		return
 	}
-	// 502 - 服务不可用
-	service := getService(route.Service)
-	if service == nil || len(service.Nodes) == 0 {
-		http.Error(w, "service unavailable", http.StatusBadGateway)
-		return
+	core := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 502 - 服务不可用
+		service := getService(route.Service)
+		if service == nil || len(service.Nodes) == 0 {
+			http.Error(w, "service unavailable", http.StatusBadGateway)
+			return
+		}
+		node := service.Nodes[0]
+		Proxy(node, w, r)
+	})
+	// 动态中间件
+	mws := []middleware.Middleware{
+		middleware.Logging(),
 	}
-	node := service.Nodes[0]
-	Proxy(node, w, r)
+	if route.RequireAuth {
+		mws = append(mws, middleware.Auth())
+	}
+	if route.RateLimit {
+		mws = append(mws, middleware.RateLimit())
+	}
+	handler := middleware.Chain(core, mws...)
+	handler.ServeHTTP(w, r)
 }
 
 // matchRoute 匹配路由
