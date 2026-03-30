@@ -31,7 +31,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if route.RequireAuth {
 		mws = append(mws, middleware.Auth())
 	}
-	if route.RateLimit {
+	if route.RequireLimit {
 		mws = append(mws, middleware.RateLimit())
 	}
 	handler := middleware.Chain(core, mws...)

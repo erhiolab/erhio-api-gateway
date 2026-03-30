@@ -1,6 +1,7 @@
 package main
 
 import (
+	"elake-api-gateway/internal/app"
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/gateway"
 	"elake-api-gateway/internal/logger"
@@ -25,6 +26,10 @@ func main() {
 	defer func(Log *zap.Logger) {
 		_ = Log.Sync()
 	}(logger.Log)
+
+	// 创建应用实例
+	appEngine := app.New()
+	defer appEngine.Close()
 
 	// 初始化路由
 	core := http.HandlerFunc(gateway.Handler)
