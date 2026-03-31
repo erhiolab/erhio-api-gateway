@@ -32,9 +32,13 @@ func main() {
 	defer appEngine.Close()
 
 	// 初始化路由
-	core := http.HandlerFunc(gateway.Handler)
+	core := gateway.Handler(appEngine)
 	handler := middleware.Chain(
 		core,
+		middleware.Recovery(),
+		middleware.Router(),
+		middleware.RequestID(),
+		middleware.RealIP(),
 		middleware.Logging(),
 	)
 

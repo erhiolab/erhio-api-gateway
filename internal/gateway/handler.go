@@ -1,61 +1,46 @@
 package gateway
 
 import (
+	"elake-api-gateway/internal/app"
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/middleware"
+	"elake-api-gateway/internal/utils"
 	"net/http"
 )
 
 // Handler 处理请求
-func Handler(w http.ResponseWriter, r *http.Request) {
-	route := matchRoute(r.URL.Path, r.Method)
-	// 404 - 未匹配到路由
-	if route == nil {
-		http.NotFound(w, r)
-		return
-	}
+func Handler(app *app.App) http.Handler {
 	core := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 502 - 服务不可用
-		service := getService(route.Service)
-		if service == nil || len(service.Nodes) == 0 {
-			http.Error(w, "service unavailable", http.StatusBadGateway)
+		service, ok := r.Context().Value(utils.ServiceKey).(*config.Service)
+		if !ok {
+			utils.Error(w, http.StatusBadGateway, 5020, "service unavailable")
 			return
 		}
 		node := service.Nodes[0]
 		Proxy(node, w, r)
 	})
-	// 动态中间件
-	mws := []middleware.Middleware{
-		middleware.Logging(),
-	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route, ok := r.Context().Value(utils.RouteKey).(*config.Route)
+		if !ok {
+			utils.Error(w, http.StatusNotFound, 4040, "route not found")
+			return
+		}
+		mws := Build(route, app)
+		handler := middleware.Chain(core, mws...)
+		handler.ServeHTTP(w, r)
+	})
+}
+
+// Build 构建中间件链
+func Build(route *config.Route, app *app.App) []middleware.Middleware {
+	var mws []middleware.Middleware
+	// 鉴权中间件
 	if route.RequireAuth {
 		mws = append(mws, middleware.Auth())
 	}
+	// 限流中间件
 	if route.RequireLimit {
-		mws = append(mws, middleware.RateLimit())
+		mws = append(mws, middleware.RateLimit(app))
 	}
-	handler := middleware.Chain(core, mws...)
-	handler.ServeHTTP(w, r)
-}
-
-// matchRoute 匹配路由
-func matchRoute(path string, method string) *config.Route {
-	cfg := config.Get()
-	for _, r := range cfg.Routes {
-		if r.Path == path && r.Method == method {
-			return &r
-		}
-	}
-	return nil
-}
-
-// getService 获取服务
-func getService(name string) *config.Service {
-	cfg := config.Get()
-	for _, s := range cfg.Services {
-		if s.Name == name {
-			return &s
-		}
-	}
-	return nil
+	return mws
 }

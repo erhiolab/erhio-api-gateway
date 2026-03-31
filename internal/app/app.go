@@ -2,6 +2,7 @@ package app
 
 import (
 	"elake-api-gateway/internal/logger"
+	"elake-api-gateway/internal/repository"
 	"elake-api-gateway/internal/storage"
 
 	"go.uber.org/zap"
@@ -10,10 +11,10 @@ import (
 // New 创建一个新的应用实例
 func New() *App {
 	// 初始化 Redis
-	initRedis := storage.InitRedis()
+	client := storage.InitRedis()
 
 	return &App{
-		Redis: initRedis,
+		Redis: repository.NewRedisManager(client),
 	}
 }
 

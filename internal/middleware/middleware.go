@@ -12,3 +12,20 @@ type ResponseWriter struct {
 	Size        int
 	WroteHeader bool
 }
+
+// WriteHeader 写入状态码
+func (rw *ResponseWriter) WriteHeader(code int) {
+	rw.StatusCode = code
+	rw.WroteHeader = true
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+// Write 写入响应
+func (rw *ResponseWriter) Write(b []byte) (int, error) {
+	if !rw.WroteHeader {
+		rw.WriteHeader(http.StatusOK)
+	}
+	n, err := rw.ResponseWriter.Write(b)
+	rw.Size += n
+	return n, err
+}

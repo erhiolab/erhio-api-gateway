@@ -2,7 +2,9 @@ package config
 
 // GatewayConfig 网关配置
 type GatewayConfig struct {
-	Port int `yaml:"port"`
+	Port     int   `yaml:"port"`
+	QpsLimit int64 `yaml:"qps-limit"`
+	QpmLimit int64 `yaml:"qpm-limit"`
 }
 
 // LoggerConfig 日志配置

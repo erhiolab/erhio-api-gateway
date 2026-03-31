@@ -18,12 +18,12 @@ var (
 
 // InitLogger 初始化日志
 func InitLogger() {
-	cfg := config.Get()
+	cfg := config.Get().Logger
 
 	// 系统日志
-	Log = createLogger(cfg.Logger.LogPath, cfg.Logger)
+	Log = createLogger(cfg.LogPath, cfg)
 	// 请求日志
-	RequestLog = createLogger(cfg.Logger.RequestLogPath, cfg.Logger)
+	RequestLog = createLogger(cfg.RequestLogPath, cfg)
 }
 
 // createLogger 创建日志记录器

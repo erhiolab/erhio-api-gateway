@@ -2,6 +2,10 @@
 gateway:
     # 监听端口
     port: 8080
+    # 每秒最大请求数
+    qps-limit: 3
+    # 每分钟最大请求数
+    qpm-limit: 100
 
 # 日志配置
 logger:
@@ -61,11 +65,11 @@ routes:
     #     service: "test-service" 服务名称
     #     require-auth: false 是否需要认证
     #     require-limit: false 是否需要限流
-    -   path: "/api/test"
+    -   path: "/"
         method: "GET"
         service: "test-service"
         require-auth: false
-        require-limit: false
+        require-limit: true
 
 # 服务配置
 services:
