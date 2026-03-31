@@ -26,40 +26,45 @@ func RateLimit(app *app.App) Middleware {
 
 			// 选择限流键
 			secretID := ""
-			ip, _ := r.Context().Value(utils.ClientIPKey).(string)
-			qpsKey := "rate_limit:" + service.Name + ":" + route.Path
-			qpmKey := "rate_limit:" + service.Name + ":" + route.Path
-			var qpsLimit int64
+			ip, ok := r.Context().Value(utils.ClientIPKey).(string)
+			if !ok || ip == "" {
+				utils.Error(w, http.StatusBadRequest, 4000, "client ip is empty")
+				return
+			}
+			qpmKey := "rl:qpm:" + service.Name + ":" + route.Path
+			qpsKey := "rl:qps:" + service.Name + ":" + route.Path
 			var qpmLimit int64
+			var qpsLimit int64
+			// TODO 等待鉴权系统加入后, 从数据库获取限流配置
 			if secretID != "" {
-				qpsKey += ":key:qps:" + secretID
-				qpmKey += ":key:qpm:" + secretID
-				qpsLimit = 100
+				qpmKey += ":key:" + secretID
+				qpsKey += ":key:" + secretID
 				qpmLimit = 100
+				qpsLimit = 100
 			} else {
 				cfg := config.Get().Gateway
-				qpsKey += ":ip:qps:" + ip
-				qpmKey += ":ip:qpm:" + ip
-				qpsLimit = cfg.QpsLimit
+				qpmKey += ":ip:" + ip
+				qpsKey += ":ip:" + ip
 				qpmLimit = cfg.QpmLimit
+				qpsLimit = cfg.QpsLimit
 			}
 
 			// 检查限流
+			qpm, err := app.Redis.IncrAndExpire(qpmKey, time.Minute, false)
+			if err != nil {
+				utils.Error(w, http.StatusInternalServerError, 5000, "rate limit error")
+				return
+			}
+			if qpm > qpmLimit {
+				utils.Error(w, http.StatusTooManyRequests, 4029, "rate limit exceeded")
+				return
+			}
 			qps, err := app.Redis.IncrAndExpire(qpsKey, time.Second, false)
 			if err != nil {
 				utils.Error(w, http.StatusInternalServerError, 5000, "rate limit error")
 				return
 			}
 			if qps > qpsLimit {
-				utils.Error(w, http.StatusTooManyRequests, 4029, "rate limit exceeded")
-				return
-			}
-			qpm, err := app.Redis.IncrAndExpire(qpmKey, time.Minute, true)
-			if err != nil {
-				utils.Error(w, http.StatusInternalServerError, 5000, "rate limit error")
-				return
-			}
-			if qpm > qpmLimit {
 				utils.Error(w, http.StatusTooManyRequests, 4029, "rate limit exceeded")
 				return
 			}

@@ -14,15 +14,17 @@ func RealIP() Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := GetClientIP(r)
 			ctx := context.WithValue(r.Context(), utils.ClientIPKey, ip)
-			if ip != "" {
-				r.Header.Set("X-Real-IP", ip)
-				// 追加到 X-Forwarded-For
-				xff := r.Header.Get("X-Forwarded-For")
-				if xff == "" {
-					r.Header.Set("X-Forwarded-For", ip)
-				} else {
-					r.Header.Set("X-Forwarded-For", xff+", "+ip)
-				}
+			if ip == "" {
+				utils.Error(w, http.StatusBadRequest, 4000, "client ip is empty")
+				return
+			}
+			r.Header.Set("X-Real-IP", ip)
+			// 追加到 X-Forwarded-For
+			xff := r.Header.Get("X-Forwarded-For")
+			if xff == "" {
+				r.Header.Set("X-Forwarded-For", ip)
+			} else {
+				r.Header.Set("X-Forwarded-For", xff+", "+ip)
 			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
