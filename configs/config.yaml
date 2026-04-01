@@ -2,6 +2,8 @@
 gateway:
     # 监听端口
     port: 8080
+    # 加密密钥
+    master-key: "b8757330c18fe65a8ce7b0733355e292"
     # 每秒最大请求数
     qps-limit: 3
     # 每分钟最大请求数
@@ -26,12 +28,43 @@ logger:
 
 
 health:
+    # 数据库健康检查间隔(秒)
+    db-health-check-interval: 10
+    # 数据库健康检查失败阈值
+    db-health-check-fail-threshold: 3
+    # 数据库健康检查成功阈值
+    db-health-check-ok-threshold: 1
     # Redis健康检查间隔(秒)
-    redis-health-check-interval: 20
+    redis-health-check-interval: 10
     # Redis健康检查失败阈值
     redis-health-check-fail-threshold: 3
     # Redis健康检查成功阈值
     redis-health-check-ok-threshold: 1
+
+# 数据库配置
+db:
+    # 主机地址
+    host: "localhost"
+    # 端口
+    port: 3306
+    # 用户名
+    user: "elake_api_gateway"
+    # 密码
+    password: "JktUjAoFCLmeDAw2"
+    # 库名
+    name: "elake_api_gateway"
+    # 最大连接数
+    max-open-connections: 50
+    # 最大空闲连接数
+    max-idle-connections: 10
+    # 单连接最大存活时间(秒)
+    conn-max-lifetime: 3600
+    # 空闲最大时间(秒)
+    conn-max-idle-time: 300
+    # 读取超时时间(秒)
+    read-timeout: 5
+    # 写入超时时间(秒)
+    write-timeout: 5
 
 # Redis配置
 redis:
@@ -57,25 +90,3 @@ redis:
     read-timeout: 5
     # 写入超时时间(秒)
     write-timeout: 5
-
-# 路由配置
-routes:
-    # -   path: "/api/test" 路径
-    #     method: "GET" 请求方法
-    #     service: "test-service" 服务名称
-    #     require-auth: false 是否需要认证
-    #     require-limit: false 是否需要限流
-    -   path: "/"
-        method: "GET"
-        service: "test-service"
-        require-auth: false
-        require-limit: true
-
-# 服务配置
-services:
-    # -   name: "test-service" 服务名称
-    #     nodes: 服务节点列表
-    #         - "http://localhost:3000" 服务节点
-    -   name: "test-service"
-        nodes:
-            - "http://localhost:3000"

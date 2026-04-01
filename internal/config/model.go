@@ -2,9 +2,10 @@ package config
 
 // GatewayConfig 网关配置
 type GatewayConfig struct {
-	Port     int   `yaml:"port"`
-	QpsLimit int64 `yaml:"qps-limit"`
-	QpmLimit int64 `yaml:"qpm-limit"`
+	Port      int    `yaml:"port"`
+	MasterKey string `yaml:"master-key"`
+	QpsLimit  int64  `yaml:"qps-limit"`
+	QpmLimit  int64  `yaml:"qpm-limit"`
 }
 
 // LoggerConfig 日志配置
@@ -20,9 +21,27 @@ type LoggerConfig struct {
 
 // HealthConfig 健康检查配置
 type HealthConfig struct {
+	DBHealthCheckInterval         int   `yaml:"db-health-check-interval"`
+	DBHealthCheckFailThreshold    int32 `yaml:"db-health-check-fail-threshold"`
+	DBHealthCheckOKThreshold      int32 `yaml:"db-health-check-ok-threshold"`
 	RedisHealthCheckFailThreshold int32 `yaml:"redis-health-check-fail-threshold"`
 	RedisHealthCheckOKThreshold   int32 `yaml:"redis-health-check-ok-threshold"`
 	RedisHealthCheckInterval      int   `yaml:"redis-health-check-interval"`
+}
+
+// DBConfig 数据库配置
+type DBConfig struct {
+	Host               string `yaml:"host"`
+	Port               int    `yaml:"port"`
+	User               string `yaml:"user"`
+	Password           string `yaml:"password"`
+	Name               string `yaml:"name"`
+	MaxOpenConnections int    `yaml:"max-open-connections"`
+	MaxIdleConnections int    `yaml:"max-idle-connections"`
+	ConnMaxLifetime    int    `yaml:"conn-max-lifetime"`
+	ConnMaxIdleTime    int    `yaml:"conn-max-idle-time"`
+	ReadTimeout        int    `yaml:"read-timeout"`
+	WriteTimeout       int    `yaml:"write-timeout"`
 }
 
 // RedisConfig Redis配置
@@ -42,17 +61,29 @@ type RedisConfig struct {
 
 // Route 路由配置
 type Route struct {
-	Path         string `yaml:"path"`
-	Method       string `yaml:"method"`
-	Service      string `yaml:"service"`
-	RequireAuth  bool   `yaml:"require-auth"`
-	RequireLimit bool   `yaml:"require-limit"`
+	ID           int64  `db:"id"`
+	Path         string `db:"path"`
+	Method       string `db:"method"`
+	ServiceID    int64  `db:"service_id"`
+	ServiceName  string `db:"service_name"`
+	RequireAuth  bool   `db:"require_auth"`
+	RequireLimit bool   `db:"require_limit"`
 }
 
 // Service 服务配置
 type Service struct {
-	Name  string   `yaml:"name"`
-	Nodes []string `yaml:"nodes"`
+	ID    int64  `db:"id"`
+	Name  string `db:"name"`
+	Nodes []ServiceNode
+}
+
+// ServiceNode 服务节点配置
+type ServiceNode struct {
+	ID        int64  `db:"id"`
+	ServiceID int64  `db:"service_id"`
+	NodeURL   string `db:"node_url"`
+	Weight    int    `db:"weight"`
+	Status    int    `db:"status"`
 }
 
 // Config 配置
@@ -60,6 +91,7 @@ type Config struct {
 	Gateway  GatewayConfig `yaml:"gateway"`
 	Logger   LoggerConfig  `yaml:"logger"`
 	Health   HealthConfig  `yaml:"health"`
+	DB       DBConfig      `yaml:"db"`
 	Redis    RedisConfig   `yaml:"redis"`
 	Routes   []Route       `yaml:"routes"`
 	Services []Service     `yaml:"services"`

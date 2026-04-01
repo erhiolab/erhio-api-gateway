@@ -6,5 +6,6 @@ import (
 
 // App 应用
 type App struct {
+	DB    *repository.DBManager
 	Redis *repository.RedisManager
 }

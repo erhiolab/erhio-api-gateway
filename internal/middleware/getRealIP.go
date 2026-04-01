@@ -8,14 +8,14 @@ import (
 	"strings"
 )
 
-// RealIP 中间件, 从请求头中获取客户端 IP 地址
-func RealIP() Middleware {
+// GetRealIP IP解析插件
+func GetRealIP() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := GetClientIP(r)
 			ctx := context.WithValue(r.Context(), utils.ClientIPKey, ip)
 			if ip == "" {
-				utils.Error(w, http.StatusBadRequest, 4000, "client ip is empty")
+				utils.BadRequest(w, "ip")
 				return
 			}
 			r.Header.Set("X-Real-IP", ip)

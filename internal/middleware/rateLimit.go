@@ -8,19 +8,19 @@ import (
 	"time"
 )
 
-// RateLimit 限流中间件
+// RateLimit 限流器插件
 func RateLimit(app *app.App) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// 从上下文获取路由信息
 			route, ok := r.Context().Value(utils.RouteKey).(*config.Route)
 			if !ok {
-				utils.Error(w, http.StatusNotFound, 4040, "Not Found")
+				utils.NotFound(w)
 				return
 			}
 			service, ok := r.Context().Value(utils.ServiceKey).(*config.Service)
 			if !ok || len(service.Nodes) == 0 {
-				utils.Error(w, http.StatusBadGateway, 5020, "service unavailable")
+				utils.BadGateway(w)
 				return
 			}
 
@@ -28,7 +28,7 @@ func RateLimit(app *app.App) Middleware {
 			secretID := ""
 			ip, ok := r.Context().Value(utils.ClientIPKey).(string)
 			if !ok || ip == "" {
-				utils.Error(w, http.StatusBadRequest, 4000, "client ip is empty")
+				utils.BadRequest(w, "ip")
 				return
 			}
 			qpmKey := "rl:qpm:" + service.Name + ":" + route.Path
@@ -52,20 +52,20 @@ func RateLimit(app *app.App) Middleware {
 			// 检查限流
 			qpm, err := app.Redis.IncrAndExpire(qpmKey, time.Minute, false)
 			if err != nil {
-				utils.Error(w, http.StatusInternalServerError, 5000, "rate limit error")
+				utils.InternalServerError(w)
 				return
 			}
 			if qpm > qpmLimit {
-				utils.Error(w, http.StatusTooManyRequests, 4029, "rate limit exceeded")
+				utils.TooManyRequests(w)
 				return
 			}
 			qps, err := app.Redis.IncrAndExpire(qpsKey, time.Second, false)
 			if err != nil {
-				utils.Error(w, http.StatusInternalServerError, 5000, "rate limit error")
+				utils.InternalServerError(w)
 				return
 			}
 			if qps > qpsLimit {
-				utils.Error(w, http.StatusTooManyRequests, 4029, "rate limit exceeded")
+				utils.TooManyRequests(w)
 				return
 			}
 			next.ServeHTTP(w, r)

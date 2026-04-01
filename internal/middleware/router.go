@@ -7,20 +7,20 @@ import (
 	"net/http"
 )
 
-// Router 路由中间件
+// Router 路由插件
 func Router() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// 匹配路由
 			route := matchRoute(r.URL.Path, r.Method)
 			if route == nil {
-				utils.Error(w, http.StatusNotFound, 4040, "Not Found")
+				utils.NotFound(w)
 				return
 			}
 			// 获取服务
-			service := getService(route.Service)
+			service := getService(route.ServiceID)
 			if service == nil || len(service.Nodes) == 0 {
-				utils.Error(w, http.StatusBadGateway, 5020, "service unavailable")
+				utils.BadGateway(w)
 				return
 			}
 			r = r.WithContext(context.WithValue(r.Context(), utils.RouteKey, route))
@@ -43,11 +43,11 @@ func matchRoute(path string, method string) *config.Route {
 }
 
 // getService 获取服务
-func getService(name string) *config.Service {
+func getService(id int64) *config.Service {
 	cfg := config.Get().Services
 	for i := range cfg {
 		s := &cfg[i]
-		if s.Name == name {
+		if s.ID == id {
 			return s
 		}
 	}

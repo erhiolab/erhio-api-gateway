@@ -12,6 +12,8 @@ const (
 	RequestIDKey contextKey = "request_id"
 	// ClientIPKey 客户端IP键
 	ClientIPKey contextKey = "client_ip"
+	// UserAgentKey 客户端 User-Agent 键
+	UserAgentKey contextKey = "user_agent"
 	// SecretID API 密钥ID
 	SecretID contextKey = "secret_id"
 )

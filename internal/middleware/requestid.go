@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// RequestID 中间件, 为每个请求添加一个唯一的请求ID到上下文键
+// RequestID 追溯ID插件
 func RequestID() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

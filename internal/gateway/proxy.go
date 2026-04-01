@@ -11,7 +11,7 @@ import (
 func Proxy(target string, w http.ResponseWriter, r *http.Request) {
 	parseURL, err := url.Parse(target)
 	if err != nil {
-		utils.Error(w, http.StatusBadGateway, 5020, "Bad Gateway")
+		utils.BadGateway(w)
 		return
 	}
 	proxy := &httputil.ReverseProxy{

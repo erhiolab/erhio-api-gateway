@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Recovery 恢复中间件
+// Recovery 恢复插件
 func Recovery() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +21,7 @@ func Recovery() func(http.Handler) http.Handler {
 						zap.String("path", r.URL.Path),
 						zap.ByteString("stack", debug.Stack()),
 					)
-					utils.Error(w, http.StatusInternalServerError, 5000, "Internal Server Error")
+					utils.InternalServerError(w)
 				}
 			}()
 			next.ServeHTTP(w, r)

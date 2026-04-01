@@ -14,7 +14,7 @@ import (
 
 // main 主函数
 func main() {
-	// 初始化配置
+	// 加载基础配置
 	cfg, err := config.Load()
 	if err != nil {
 		return
@@ -31,14 +31,25 @@ func main() {
 	appEngine := app.New()
 	defer appEngine.Close()
 
+	// 从数据库加载配置
+	services, routes, err := appEngine.LoadConfigFromDB()
+	if err != nil {
+		logger.Log.Fatal("从数据库加载配置失败", zap.Error(err))
+		return
+	}
+	// 合并配置到内存
+	mergedCfg := config.MergeConfig(cfg, services, routes)
+	config.Set(mergedCfg)
 	// 初始化路由
 	core := gateway.Handler(appEngine)
 	handler := middleware.Chain(
 		core,
 		middleware.Recovery(),
+		middleware.HealthCheck(),
 		middleware.Router(),
+		middleware.GetUserAgent(),
+		middleware.GetRealIP(),
 		middleware.RequestID(),
-		middleware.RealIP(),
 		middleware.Logging(),
 	)
 
