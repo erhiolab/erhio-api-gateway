@@ -12,13 +12,16 @@ import (
 // New 创建一个新的应用实例
 func New() *App {
 	// 初始化数据库
-	dbClient := storage.InitDB()
+	dbClient := repository.NewDBManager(storage.InitDB())
 	// 初始化 Redis
-	redisClient := storage.InitRedis()
+	redisClient := repository.NewRedisManager(storage.InitRedis())
+	// 初始化 IPDB
+	ipdb := repository.NewIPDBManager(storage.InitIPDB())
 
 	return &App{
-		DB:    repository.NewDBManager(dbClient),
-		Redis: repository.NewRedisManager(redisClient),
+		DB:    dbClient,
+		Redis: redisClient,
+		IPDB:  ipdb,
 	}
 }
 

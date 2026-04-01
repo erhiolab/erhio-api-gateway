@@ -16,7 +16,11 @@ func GetUserAgent() Middleware {
 				ua = "unknown"
 			}
 			device := ParseUserAgent(ua)
-			ctx := context.WithValue(r.Context(), utils.UserAgentKey, utils.UserAgent{UserAgent: ua, Device: device})
+			var userAgent = &utils.UserAgent{
+				UserAgent: ua,
+				Device:    device,
+			}
+			ctx := context.WithValue(r.Context(), utils.UserAgentKey, userAgent)
 			r.Header.Set("User-Agent", ua)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

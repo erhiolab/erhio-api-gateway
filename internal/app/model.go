@@ -8,4 +8,5 @@ import (
 type App struct {
 	DB    *repository.DBManager
 	Redis *repository.RedisManager
+	IPDB  *repository.IPDBManager
 }

@@ -6,6 +6,7 @@ import (
 	"elake-api-gateway/internal/gateway"
 	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/middleware"
+	"elake-api-gateway/internal/utils"
 	"net/http"
 	"strconv"
 
@@ -26,6 +27,9 @@ func main() {
 	defer func(Log *zap.Logger) {
 		_ = Log.Sync()
 	}(logger.Log)
+
+	// 创建目录
+	utils.CreateFolder()
 
 	// 创建应用实例
 	appEngine := app.New()
@@ -48,7 +52,7 @@ func main() {
 		middleware.HealthCheck(),
 		middleware.Router(),
 		middleware.GetUserAgent(),
-		middleware.GetRealIP(),
+		middleware.GetRealIP(appEngine),
 		middleware.RequestID(),
 		middleware.Logging(),
 	)

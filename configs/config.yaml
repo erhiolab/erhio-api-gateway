@@ -2,6 +2,13 @@
 gateway:
     # 监听端口
     port: 8080
+    # 数据路径
+    data-path: "data"
+    # 临时路径
+    temp-path: "tmp"
+
+# 认证配置
+auth:
     # 加密密钥
     master-key: "b8757330c18fe65a8ce7b0733355e292"
     # 每秒最大请求数
@@ -40,6 +47,12 @@ health:
     redis-health-check-fail-threshold: 3
     # Redis健康检查成功阈值
     redis-health-check-ok-threshold: 1
+    # IP数据库健康检查间隔(秒)
+    ipdb-health-check-interval: 20
+    # IP数据库健康检查失败阈值
+    ipdb-health-check-fail-threshold: 3
+    # IP数据库健康检查成功阈值
+    ipdb-health-check-ok-threshold: 1
 
 # 数据库配置
 db:
@@ -90,3 +103,10 @@ redis:
     read-timeout: 5
     # 写入超时时间(秒)
     write-timeout: 5
+
+# IPDB
+ipdb:
+    # IPDB 令牌
+    token: "iWWtrT3GBgOpraaSA0q8nWL3TFhiE2FtsUdEKANE3wX40WW7dK4Mpt5t172nF7Me"
+    # 最大下载尝试次数
+    max-download-attempts: 5

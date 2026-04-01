@@ -27,19 +27,17 @@ func Logging() Middleware {
 			if id, ok := r.Context().Value(utils.RequestIDKey).(string); ok {
 				requestID = id
 			}
-			clientIP := "unknown"
-			if ip, ok := r.Context().Value(utils.ClientIPKey).(string); ok {
-				clientIP = ip
+			clientIP := utils.IPLocation{}
+			if ipPtr, ok := r.Context().Value(utils.ClientIPKey).(*utils.IPLocation); ok && ipPtr != nil {
+				clientIP = *ipPtr
 			}
 			method := r.Method
 			path := r.URL.Path
 			status := wrapped.StatusCode
 			origin := r.Header.Get("Origin")
-			userAgent := "unknown"
-			device := "unknown"
-			if ua, ok := r.Context().Value(utils.UserAgentKey).(utils.UserAgent); ok {
-				userAgent = ua.UserAgent
-				device = ua.Device
+			userAgent := utils.UserAgent{}
+			if uaPtr, ok := r.Context().Value(utils.UserAgentKey).(*utils.UserAgent); ok && uaPtr != nil {
+				userAgent = *uaPtr
 			}
 			duration := time.Since(start)
 			durationNs := duration.Nanoseconds()
@@ -47,13 +45,12 @@ func Logging() Middleware {
 			logger.RequestLog.Info("HTTP请求",
 				zap.Int64("serviceID", serviceID),
 				zap.String("requestID", requestID),
-				zap.String("clientIP", clientIP),
+				zap.Any("clientIP", clientIP),
 				zap.String("method", method),
 				zap.String("path", path),
 				zap.Int("status", status),
 				zap.String("origin", origin),
-				zap.String("userAgent", userAgent),
-				zap.String("device", device),
+				zap.Any("userAgent", userAgent),
 				zap.Int64("durationNs", durationNs),
 				zap.Int64("sizeBytes", responseSize),
 			)

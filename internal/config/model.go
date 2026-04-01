@@ -2,7 +2,13 @@ package config
 
 // GatewayConfig 网关配置
 type GatewayConfig struct {
-	Port      int    `yaml:"port"`
+	Port     int    `yaml:"port"`
+	DataPath string `yaml:"data-path"`
+	TempPath string `yaml:"temp-path"`
+}
+
+// AuthConfig 认证配置
+type AuthConfig struct {
 	MasterKey string `yaml:"master-key"`
 	QpsLimit  int64  `yaml:"qps-limit"`
 	QpmLimit  int64  `yaml:"qpm-limit"`
@@ -27,6 +33,9 @@ type HealthConfig struct {
 	RedisHealthCheckFailThreshold int32 `yaml:"redis-health-check-fail-threshold"`
 	RedisHealthCheckOKThreshold   int32 `yaml:"redis-health-check-ok-threshold"`
 	RedisHealthCheckInterval      int   `yaml:"redis-health-check-interval"`
+	IPDBHealthCheckFailThreshold  int32 `yaml:"ipdb-health-check-fail-threshold"`
+	IPDBHealthCheckOKThreshold    int32 `yaml:"ipdb-health-check-ok-threshold"`
+	IPDBHealthCheckInterval       int   `yaml:"ipdb-health-check-interval"`
 }
 
 // DBConfig 数据库配置
@@ -86,13 +95,21 @@ type ServiceNode struct {
 	Status    int    `db:"status"`
 }
 
+// IPDBConfig IPDB配置
+type IPDBConfig struct {
+	Token               string `yaml:"token"`
+	MaxDownloadAttempts int    `yaml:"max-download-attempts"`
+}
+
 // Config 配置
 type Config struct {
 	Gateway  GatewayConfig `yaml:"gateway"`
+	Auth     AuthConfig    `yaml:"auth"`
 	Logger   LoggerConfig  `yaml:"logger"`
 	Health   HealthConfig  `yaml:"health"`
 	DB       DBConfig      `yaml:"db"`
 	Redis    RedisConfig   `yaml:"redis"`
+	IPDB     IPDBConfig    `yaml:"ipdb"`
 	Routes   []Route       `yaml:"routes"`
 	Services []Service     `yaml:"services"`
 }

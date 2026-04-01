@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"elake-api-gateway/internal/app"
 	"elake-api-gateway/internal/utils"
 	"net"
 	"net/http"
@@ -9,15 +10,35 @@ import (
 )
 
 // GetRealIP IP解析插件
-func GetRealIP() Middleware {
+func GetRealIP(app *app.App) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := GetClientIP(r)
-			ctx := context.WithValue(r.Context(), utils.ClientIPKey, ip)
 			if ip == "" {
 				utils.BadRequest(w, "ip")
 				return
 			}
+			rec, err := app.IPDB.GetAll(ip)
+			if err != nil {
+				utils.InternalServerError(w)
+				return
+			}
+			if rec == nil {
+				utils.BadRequest(w, "ip")
+				return
+			}
+			var location = &utils.IPLocation{
+				IP:           ip,
+				CountryShort: rec.CountryShort,
+				CountryLong:  rec.CountryLong,
+				Region:       rec.Region,
+				City:         rec.City,
+				Latitude:     rec.Latitude,
+				Longitude:    rec.Longitude,
+				Zipcode:      rec.Zipcode,
+				Timezone:     rec.Timezone,
+			}
+			ctx := context.WithValue(r.Context(), utils.ClientIPKey, location)
 			r.Header.Set("X-Real-IP", ip)
 			// 追加到 X-Forwarded-For
 			xff := r.Header.Get("X-Forwarded-For")

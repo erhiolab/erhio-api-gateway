@@ -42,7 +42,7 @@ func RateLimit(app *app.App) Middleware {
 				qpmLimit = 100
 				qpsLimit = 100
 			} else {
-				cfg := config.Get().Gateway
+				cfg := config.Get().Auth
 				qpmKey += ":ip:" + ip
 				qpsKey += ":ip:" + ip
 				qpmLimit = cfg.QpmLimit

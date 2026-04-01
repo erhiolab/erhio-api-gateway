@@ -10,8 +10,7 @@ import (
 func HealthCheck() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// IPDatabase
-			deps := []string{"DB", "Redis"}
+			deps := []string{"DB", "Redis", "IPDB"}
 			for _, dep := range deps {
 				if !healthManager.Global().IsHealthy(dep) {
 					utils.InternalServerError(w)
