@@ -26,8 +26,8 @@ func RateLimit(app *app.App) Middleware {
 
 			// 选择限流键
 			secretID := ""
-			ip, ok := r.Context().Value(utils.ClientIPKey).(string)
-			if !ok || ip == "" {
+			ip, ok := r.Context().Value(utils.ClientIPKey).(*utils.IPLocation)
+			if !ok || ip == nil {
 				utils.BadRequest(w, "ip")
 				return
 			}
@@ -43,8 +43,8 @@ func RateLimit(app *app.App) Middleware {
 				qpsLimit = 100
 			} else {
 				cfg := config.Get().Auth
-				qpmKey += ":ip:" + ip
-				qpsKey += ":ip:" + ip
+				qpmKey += ":ip:" + ip.IP
+				qpsKey += ":ip:" + ip.IP
 				qpmLimit = cfg.QpmLimit
 				qpsLimit = cfg.QpsLimit
 			}

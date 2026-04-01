@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// RequestID 追溯ID插件
-func RequestID() Middleware {
+// TraceID 追溯ID插件
+func TraceID() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestID := uuid.New().String()
