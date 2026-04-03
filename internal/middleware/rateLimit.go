@@ -3,6 +3,7 @@ package middleware
 import (
 	"elake-api-gateway/internal/app"
 	"elake-api-gateway/internal/config"
+	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 	"time"
@@ -12,7 +13,6 @@ import (
 func RateLimit(app *app.App) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// 从上下文获取路由信息
 			route, ok := r.Context().Value(utils.RouteKey).(*config.Route)
 			if !ok {
 				utils.NotFound(w)
@@ -23,50 +23,65 @@ func RateLimit(app *app.App) Middleware {
 				utils.BadGateway(w)
 				return
 			}
-
 			// 选择限流键
-			secretID := ""
-			ip, ok := r.Context().Value(utils.ClientIPKey).(*utils.IPLocation)
+			apiKeyInfo := models.APIKeyInfo{}
+			if apiKeyInfoPtr, ok := r.Context().Value(utils.ApiKeyInfoKey).(*models.APIKeyInfo); ok && apiKeyInfoPtr != nil {
+				apiKeyInfo = *apiKeyInfoPtr
+			}
+			ip, ok := r.Context().Value(utils.ClientIPKey).(*models.IPLocation)
 			if !ok || ip == nil {
 				utils.BadRequest(w, "ip")
 				return
 			}
-			qpmKey := "rl:qpm:" + service.Name + ":" + route.Path
-			qpsKey := "rl:qps:" + service.Name + ":" + route.Path
+			cfg := config.Get()
+			qpmKey := cfg.Redis.ProjectPrefix + ":qpm:" + service.Name + ":" + route.Path
+			qpsKey := cfg.Redis.ProjectPrefix + ":qps:" + service.Name + ":" + route.Path
 			var qpmLimit int64
 			var qpsLimit int64
-			// TODO 等待鉴权系统加入后, 从数据库获取限流配置
-			if secretID != "" {
-				qpmKey += ":key:" + secretID
-				qpsKey += ":key:" + secretID
-				qpmLimit = 100
-				qpsLimit = 100
+			if apiKeyInfo.SecretID != "" {
+				qpmKey += ":key:" + apiKeyInfo.SecretID
+				qpsKey += ":key:" + apiKeyInfo.SecretID
+				qpmLimit = apiKeyInfo.QPM
+				qpsLimit = apiKeyInfo.QPS
 			} else {
-				cfg := config.Get().Auth
 				qpmKey += ":ip:" + ip.IP
 				qpsKey += ":ip:" + ip.IP
-				qpmLimit = cfg.QpmLimit
-				qpsLimit = cfg.QpsLimit
+				route := config.Route{}
+				if routePtr, ok := r.Context().Value(utils.RouteKey).(*config.Route); ok {
+					route = *routePtr
+				}
+				qpmLimit = route.QPM
+				qpsLimit = route.QPS
+				if qpmLimit <= 0 {
+					qpmLimit = cfg.Auth.QpmLimit
+				}
+				if qpsLimit <= 0 {
+					qpsLimit = cfg.Auth.QpsLimit
+				}
 			}
 
 			// 检查限流
-			qpm, err := app.Redis.IncrAndExpire(qpmKey, time.Minute, false)
-			if err != nil {
-				utils.InternalServerError(w)
-				return
+			if qpmLimit > 0 {
+				qpm, err := app.Redis.IncrAndExpire(qpmKey, time.Minute, false)
+				if err != nil {
+					utils.InternalServerError(w)
+					return
+				}
+				if qpm > qpmLimit {
+					utils.TooManyRequests(w)
+					return
+				}
 			}
-			if qpm > qpmLimit {
-				utils.TooManyRequests(w)
-				return
-			}
-			qps, err := app.Redis.IncrAndExpire(qpsKey, time.Second, false)
-			if err != nil {
-				utils.InternalServerError(w)
-				return
-			}
-			if qps > qpsLimit {
-				utils.TooManyRequests(w)
-				return
+			if qpsLimit > 0 {
+				qps, err := app.Redis.IncrAndExpire(qpsKey, time.Second, false)
+				if err != nil {
+					utils.InternalServerError(w)
+					return
+				}
+				if qps > qpsLimit {
+					utils.TooManyRequests(w)
+					return
+				}
 			}
 			next.ServeHTTP(w, r)
 		})

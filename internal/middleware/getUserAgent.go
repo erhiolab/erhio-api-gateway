@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 	"strings"
@@ -16,7 +17,7 @@ func GetUserAgent() Middleware {
 				ua = "unknown"
 			}
 			device := ParseUserAgent(ua)
-			var userAgent = &utils.UserAgent{
+			var userAgent = &models.UserAgent{
 				UserAgent: ua,
 				Device:    device,
 			}

@@ -8,8 +8,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/ip2location/ip2location-go v8.3.0+incompatible
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/redis/go-redis/v9 v9.18.0
 	go.uber.org/zap v1.27.1
+	golang.org/x/sync v0.20.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )

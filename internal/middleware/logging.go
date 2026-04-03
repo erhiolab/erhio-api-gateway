@@ -3,6 +3,7 @@ package middleware
 import (
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
+	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 	"time"
@@ -27,16 +28,16 @@ func Logging() Middleware {
 			if id, ok := r.Context().Value(utils.RequestIDKey).(string); ok {
 				requestID = id
 			}
-			clientIP := utils.IPLocation{}
-			if ipPtr, ok := r.Context().Value(utils.ClientIPKey).(*utils.IPLocation); ok && ipPtr != nil {
+			clientIP := models.IPLocation{}
+			if ipPtr, ok := r.Context().Value(utils.ClientIPKey).(*models.IPLocation); ok && ipPtr != nil {
 				clientIP = *ipPtr
 			}
 			method := r.Method
 			path := r.URL.Path
 			status := wrapped.StatusCode
 			origin := r.Header.Get("Origin")
-			userAgent := utils.UserAgent{}
-			if uaPtr, ok := r.Context().Value(utils.UserAgentKey).(*utils.UserAgent); ok && uaPtr != nil {
+			userAgent := models.UserAgent{}
+			if uaPtr, ok := r.Context().Value(utils.UserAgentKey).(*models.UserAgent); ok && uaPtr != nil {
 				userAgent = *uaPtr
 			}
 			duration := time.Since(start)

@@ -5,6 +5,7 @@ import (
 	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/repository"
 	"elake-api-gateway/internal/storage"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -15,13 +16,16 @@ func New() *App {
 	dbClient := repository.NewDBManager(storage.InitDB())
 	// 初始化 Redis
 	redisClient := repository.NewRedisManager(storage.InitRedis())
+	// 初始化本地缓存
+	localCache := storage.NewLocalCache(time.Minute)
 	// 初始化 IPDB
 	ipdb := repository.NewIPDBManager(storage.InitIPDB())
 
 	return &App{
-		DB:    dbClient,
-		Redis: redisClient,
-		IPDB:  ipdb,
+		DB:         dbClient,
+		Redis:      redisClient,
+		LocalCache: localCache,
+		IPDB:       ipdb,
 	}
 }
 
@@ -59,5 +63,15 @@ func (app *App) Close() {
 		if err != nil {
 			logger.Log.Fatal("关闭 Redis 连接失败", zap.Error(err))
 		}
+	}
+	// 关闭本地缓存
+	if app.LocalCache != nil {
+		logger.Log.Info("关闭 LocalCache")
+		app.LocalCache.Stop()
+	}
+	// 关闭 IPDB 连接
+	if app.IPDB != nil {
+		logger.Log.Info("关闭 IPDB 连接")
+		app.IPDB.Close()
 	}
 }

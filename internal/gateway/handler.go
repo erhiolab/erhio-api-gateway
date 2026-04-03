@@ -35,10 +35,16 @@ func Handler(app *app.App) http.Handler {
 func Build(route *config.Route, app *app.App) []middleware.Middleware {
 	var mws []middleware.Middleware
 	if route.RequireAuth {
-		mws = append(mws, middleware.Auth())
+		mws = append(mws, middleware.Auth(app))
 	}
 	if route.RequireLimit {
 		mws = append(mws, middleware.RateLimit(app))
+	}
+	if route.IpLimit {
+		mws = append(mws, middleware.IPLimit())
+	}
+	if route.CountryLimit {
+		mws = append(mws, middleware.CountryLimit())
 	}
 	return mws
 }

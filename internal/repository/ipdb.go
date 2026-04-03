@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/storage"
-	"elake-api-gateway/internal/utils"
 )
 
 // IPDBManager 封装 IPDB 数据数据库操作
@@ -112,7 +112,7 @@ func (ipdb *IPDBManager) GetTimezone(ip string) (string, error) {
 }
 
 // GetAll 获取 IP 地址的所有信息
-func (ipdb *IPDBManager) GetAll(ip string) (*utils.IPLocation, error) {
+func (ipdb *IPDBManager) GetAll(ip string) (*models.IPLocation, error) {
 	if ip == "" {
 		return nil, nil
 	}
@@ -120,7 +120,7 @@ func (ipdb *IPDBManager) GetAll(ip string) (*utils.IPLocation, error) {
 	if err != nil {
 		return nil, err
 	}
-	var location = &utils.IPLocation{
+	var location = &models.IPLocation{
 		IP:           ip,
 		CountryShort: rec.Country_short,
 		CountryLong:  rec.Country_long,

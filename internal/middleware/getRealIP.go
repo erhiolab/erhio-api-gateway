@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"elake-api-gateway/internal/app"
+	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net"
 	"net/http"
@@ -27,7 +28,7 @@ func GetRealIP(app *app.App) Middleware {
 				utils.BadRequest(w, "ip")
 				return
 			}
-			var location = &utils.IPLocation{
+			var location = &models.IPLocation{
 				IP:           ip,
 				CountryShort: rec.CountryShort,
 				CountryLong:  rec.CountryLong,

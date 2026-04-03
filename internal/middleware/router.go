@@ -13,7 +13,7 @@ func Router() Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// 匹配路由
 			route := matchRoute(r.URL.Path, r.Method)
-			if route == nil {
+			if route == nil || !route.Enabled {
 				utils.NotFound(w)
 				return
 			}

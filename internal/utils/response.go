@@ -30,9 +30,32 @@ func BadRequest(w http.ResponseWriter, name string) {
 	Error(w, http.StatusBadRequest, 4000, "client "+name+" is empty")
 }
 
+// Unauthorized 未授权响应
+func Unauthorized(w http.ResponseWriter, message ...string) {
+	messageStr := "unauthorized"
+	if len(message) > 0 {
+		messageStr = message[0]
+	}
+	Error(w, http.StatusUnauthorized, 4010, messageStr)
+}
+
+// Forbidden 禁止响应
+func Forbidden(w http.ResponseWriter, message ...string) {
+	messageStr := "forbidden"
+	if len(message) > 0 {
+		messageStr = message[0]
+	}
+	Error(w, http.StatusForbidden, 4030, messageStr)
+}
+
 // NotFound 路由不存在响应
 func NotFound(w http.ResponseWriter) {
 	Error(w, http.StatusNotFound, 4040, "route not found")
+}
+
+// Conflict 冲突响应
+func Conflict(w http.ResponseWriter) {
+	Error(w, http.StatusConflict, 4090, "conflict")
 }
 
 // TooManyRequests 请求过多
