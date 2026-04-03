@@ -30,7 +30,7 @@ auth:
 #        - "127.0.0.1"
     # 全局国家黑名单
     country-black-list:
-        - "CN"
+#        - "EN"
 
 # 日志配置
 logger:

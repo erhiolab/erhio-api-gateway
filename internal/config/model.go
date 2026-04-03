@@ -93,9 +93,10 @@ type Route struct {
 
 // Service 服务配置
 type Service struct {
-	ID    int64  `db:"id"`
-	Name  string `db:"name"`
-	Nodes []ServiceNode
+	ID       int64  `db:"id"`
+	Name     string `db:"name"`
+	BasePath string `db:"base_path"`
+	Nodes    []ServiceNode
 }
 
 // ServiceNode 服务节点配置

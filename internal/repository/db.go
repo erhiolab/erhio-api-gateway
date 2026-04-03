@@ -131,7 +131,7 @@ func (db *DBManager) GetAllServices() ([]config.Service, error) {
 	defer cancel()
 	// 获取所有服务
 	var dbServices []config.Service
-	query := `SELECT id, name FROM services`
+	query := `SELECT id, name, base_path FROM services`
 	err := db.db.SelectContext(ctx, &dbServices, query)
 	if err != nil {
 		return nil, err
@@ -149,9 +149,10 @@ func (db *DBManager) GetAllServices() ([]config.Service, error) {
 			return nil, err
 		}
 		services = append(services, config.Service{
-			ID:    dbService.ID,
-			Name:  dbService.Name,
-			Nodes: nodes,
+			ID:       dbService.ID,
+			Name:     dbService.Name,
+			BasePath: dbService.BasePath,
+			Nodes:    nodes,
 		})
 	}
 	return services, nil

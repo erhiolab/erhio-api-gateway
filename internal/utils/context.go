@@ -8,6 +8,8 @@ const (
 	RouteKey contextKey = "route"
 	// ServiceKey 服务键
 	ServiceKey contextKey = "service"
+	// UpstreamPathKey 上游路径键
+	UpstreamPathKey contextKey = "upstream_path"
 	// RequestIDKey 请求ID键
 	RequestIDKey contextKey = "request_id"
 	// ClientIPKey 客户端IP键
