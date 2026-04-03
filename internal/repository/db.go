@@ -193,6 +193,11 @@ func (db *DBManager) GetAllRoutes() ([]config.Route, error) {
 	return routes, nil
 }
 
+// GetDB 获取数据库连接
+func (db *DBManager) GetDB() *sqlx.DB {
+	return db.db
+}
+
 // Close 关闭数据库连接
 func (db *DBManager) Close() error {
 	return db.db.Close()

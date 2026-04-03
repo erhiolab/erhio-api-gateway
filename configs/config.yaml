@@ -2,35 +2,10 @@
 gateway:
     # 监听端口
     port: 8080
-    # 本地缓存过期时间(分钟)
-    local-cache-expire: 10
-    # Redis缓存过期时间(分钟)
-    redis-cache-expire: 60
     # 数据路径
     data-path: "data"
     # 临时路径
     temp-path: "tmp"
-
-# 认证配置
-auth:
-    # 加密密钥
-    master-key: "b8757330c18fe65a8ce7b0733355e292"
-    # 时间戳窗口(秒)
-    timestamp-window: 5
-    # nonce 唯一性校验窗口(次)
-    nonce-window: 2
-    # nonce 唯一性校验窗口(小时)
-    nonce-window-hour: 24
-    # 每秒最大请求数
-    qps-limit: 3
-    # 每分钟最大请求数
-    qpm-limit: 100
-    # 全局IP黑名单
-    ip-black-list:
-#        - "127.0.0.1"
-    # 全局国家黑名单
-    country-black-list:
-#        - "EN"
 
 # 日志配置
 logger:

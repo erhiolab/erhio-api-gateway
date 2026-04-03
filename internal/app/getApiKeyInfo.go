@@ -23,8 +23,8 @@ func (app *App) GetApiKeyInfo(secretID string) (*models.APIKeyInfo, bool, error)
 	}
 	cfg := config.Get()
 	cacheKey := cfg.Redis.ProjectPrefix + ":api_key_info:" + secretID
-	localCacheExpire := time.Duration(cfg.Gateway.LocalCacheExpire) * time.Minute
-	redisCacheExpire := time.Duration(cfg.Gateway.RedisCacheExpire) * time.Minute
+	localCacheExpire := time.Duration(cfg.DatabaseConfig.LocalCacheExpire) * time.Minute
+	redisCacheExpire := time.Duration(cfg.DatabaseConfig.RedisCacheExpire) * time.Minute
 	redisTTL := redisCacheExpire + time.Duration(rand.Int63n(int64(redisCacheExpire/10)))
 	// 先尝试从本地缓存中获取
 	if val, ok := app.LocalCache.Get(cacheKey); ok {

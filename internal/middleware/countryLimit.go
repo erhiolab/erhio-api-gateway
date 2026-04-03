@@ -18,7 +18,7 @@ func CountryLimit() Middleware {
 			}
 			// 全局国家黑名单
 			cfg := config.Get()
-			if len(cfg.Auth.CountryBlackList) > 0 && isCountryInList(cfg.Auth.CountryBlackList, clientIP) {
+			if len(cfg.DatabaseConfig.Auth.CountryBlackList) > 0 && isCountryInList(cfg.DatabaseConfig.Auth.CountryBlackList, clientIP) {
 				utils.Forbidden(w, "Country is globally blacklisted")
 				return
 			}

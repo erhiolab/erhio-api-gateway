@@ -39,7 +39,7 @@ func GenerateCredentials() (string, string, string, error) {
 // EncryptSecret 加密密钥
 func EncryptSecret(plain string) (string, error) {
 	cfg := config.Get()
-	block, err := aes.NewCipher([]byte(cfg.Auth.MasterKey))
+	block, err := aes.NewCipher([]byte(cfg.DatabaseConfig.Auth.MasterKey))
 	if err != nil {
 		return "", err
 	}
@@ -63,7 +63,7 @@ func DecryptSecret(enc string) (string, error) {
 		return "", err
 	}
 	cfg := config.Get()
-	block, err := aes.NewCipher([]byte(cfg.Auth.MasterKey))
+	block, err := aes.NewCipher([]byte(cfg.DatabaseConfig.Auth.MasterKey))
 	if err != nil {
 		return "", err
 	}

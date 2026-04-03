@@ -36,13 +36,13 @@ func main() {
 	defer appEngine.Close()
 
 	// 从数据库加载配置
-	services, routes, err := appEngine.LoadConfigFromDB()
+	services, routes, dbConfig, err := appEngine.LoadConfigFromDB()
 	if err != nil {
 		logger.Log.Fatal("从数据库加载配置失败", zap.Error(err))
 		return
 	}
 	// 合并配置到内存
-	mergedCfg := config.MergeConfig(cfg, services, routes)
+	mergedCfg := config.MergeConfig(cfg, dbConfig, services, routes)
 	config.Set(mergedCfg)
 	// 初始化路由
 	core := gateway.Handler(appEngine)

@@ -30,20 +30,26 @@ func New() *App {
 }
 
 // LoadConfigFromDB 从数据库加载配置
-func (app *App) LoadConfigFromDB() ([]config.Service, []config.Route, error) {
+func (app *App) LoadConfigFromDB() ([]config.Service, []config.Route, *config.DatabaseConfig, error) {
 	// 从数据库读取所有服务
 	services, err := app.DB.GetAllServices()
 	if err != nil {
 		logger.Log.Error("从数据库加载服务失败", zap.Error(err))
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	// 从数据库读取所有路由
 	routes, err := app.DB.GetAllRoutes()
 	if err != nil {
 		logger.Log.Error("从数据库加载路由失败", zap.Error(err))
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return services, routes, nil
+	// 从数据库读取配置
+	dbConfig, err := config.LoadDatabaseConfig(app.DB.GetDB())
+	if err != nil {
+		logger.Log.Error("从数据库加载配置失败", zap.Error(err))
+		return nil, nil, nil, err
+	}
+	return services, routes, dbConfig, nil
 }
 
 // Close 关闭应用实例的所有资源

@@ -53,10 +53,10 @@ func RateLimit(app *app.App) Middleware {
 				qpmLimit = route.QPM
 				qpsLimit = route.QPS
 				if qpmLimit <= 0 {
-					qpmLimit = cfg.Auth.QpmLimit
+					qpmLimit = cfg.DatabaseConfig.Auth.QpmLimit
 				}
 				if qpsLimit <= 0 {
-					qpsLimit = cfg.Auth.QpsLimit
+					qpsLimit = cfg.DatabaseConfig.Auth.QpsLimit
 				}
 			}
 

@@ -18,7 +18,7 @@ func IPLimit() Middleware {
 			}
 			// 全局IP黑名单
 			cfg := config.Get()
-			if len(cfg.Auth.IPBlacklist) > 0 && utils.Contains(cfg.Auth.IPBlacklist, clientIP.IP) {
+			if len(cfg.DatabaseConfig.Auth.IPBlacklist) > 0 && utils.Contains(cfg.DatabaseConfig.Auth.IPBlacklist, clientIP.IP) {
 				utils.Forbidden(w, "IP is globally blacklisted")
 				return
 			}

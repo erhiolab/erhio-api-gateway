@@ -45,18 +45,18 @@ func Auth(app *app.App) Middleware {
 				ts /= 1000
 			}
 			// 校验时间窗口
-			if utils.Abs(time.Now().Unix()-ts) > cfg.Auth.TimestampWindow {
+			if utils.Abs(time.Now().Unix()-ts) > cfg.DatabaseConfig.Auth.TimestampWindow {
 				utils.Forbidden(w, "Request expired")
 				return
 			}
 			// nonce 唯一性校验
 			nonceKey := cfg.Redis.ProjectPrefix + ":nonce:" + secretID + ":" + nonce
-			count, err := app.Redis.IncrAndExpire(nonceKey, time.Duration(cfg.Auth.NonceWindowHour)*time.Hour, false)
+			count, err := app.Redis.IncrAndExpire(nonceKey, time.Duration(cfg.DatabaseConfig.Auth.NonceWindowHour)*time.Hour, false)
 			if err != nil {
 				utils.InternalServerError(w)
 				return
 			}
-			if count > cfg.Auth.NonceWindow {
+			if count > cfg.DatabaseConfig.Auth.NonceWindow {
 				utils.Forbidden(w, "Nonce window exceeded")
 				return
 			}

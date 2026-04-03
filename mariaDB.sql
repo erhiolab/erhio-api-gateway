@@ -1,6 +1,22 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
+-- 网关配置 (api_gateway_config)
+-- ----------------------------
+DROP TABLE IF EXISTS `api_gateway_config`;
+CREATE TABLE api_gateway_config
+(
+	id          VARCHAR(255) PRIMARY KEY COMMENT '配置ID',
+	group_name  VARCHAR(64)                            NOT NULL COMMENT '配置分组',
+	type        ENUM ('string', 'int', 'bool', 'json') NOT NULL COMMENT '类型',
+	value       TEXT COMMENT '配置值',
+	title       VARCHAR(255) DEFAULT NULL COMMENT '配置标题',
+	description VARCHAR(255) DEFAULT NULL COMMENT '配置说明',
+	version     INT          DEFAULT 1 COMMENT '版本号',
+	updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ----------------------------
 -- API 密钥表 (api_keys)
 -- ----------------------------
 DROP TABLE IF EXISTS `api_keys`;
@@ -51,7 +67,7 @@ CREATE TABLE services
 (
 	id         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '服务 ID',
 	name       VARCHAR(100) NOT NULL UNIQUE COMMENT '服务名称',
-	base_path  VARCHAR(64) NOT NULL COMMENT '服务基础路径',
+	base_path  VARCHAR(64)  NOT NULL COMMENT '服务基础路径',
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 );
