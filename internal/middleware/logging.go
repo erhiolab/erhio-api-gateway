@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
@@ -21,7 +20,7 @@ func Logging() Middleware {
 			next.ServeHTTP(wrapped, r)
 			// 请求执行完成后再记录日志
 			serviceID := int64(0)
-			if service, ok := r.Context().Value(utils.ServiceKey).(*config.Service); ok {
+			if service, ok := r.Context().Value(utils.ServiceKey).(*models.Service); ok {
 				serviceID = service.ID
 			}
 			requestID := "unknown"

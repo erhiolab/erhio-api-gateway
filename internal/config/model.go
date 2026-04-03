@@ -76,6 +76,4 @@ type Config struct {
 	Redis          RedisConfig    `yaml:"redis"`
 	IPDB           IPDBConfig     `yaml:"ipdb"`
 	DatabaseConfig DatabaseConfig `yaml:"-"`
-	Routes         []Route        `yaml:"routes"`
-	Services       []Service      `yaml:"services"`
 }

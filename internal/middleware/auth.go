@@ -5,6 +5,7 @@ import (
 	"elake-api-gateway/internal/app"
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
+	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 	"strconv"
@@ -50,7 +51,7 @@ func Auth(app *app.App) Middleware {
 				return
 			}
 			// nonce 唯一性校验
-			nonceKey := cfg.Redis.ProjectPrefix + ":nonce:" + secretID + ":" + nonce
+			nonceKey := cfg.Redis.ProjectPrefix + ":limit:nonce:" + secretID + ":" + nonce
 			count, err := app.Redis.IncrAndExpire(nonceKey, time.Duration(cfg.DatabaseConfig.Auth.NonceWindowHour)*time.Hour, false)
 			if err != nil {
 				utils.InternalServerError(w)
@@ -82,7 +83,7 @@ func Auth(app *app.App) Middleware {
 				return
 			}
 			// 校验路由权限
-			route, ok := r.Context().Value(utils.RouteKey).(*config.Route)
+			route, ok := r.Context().Value(utils.RouteKey).(*models.Route)
 			if !ok {
 				utils.NotFound(w)
 				return

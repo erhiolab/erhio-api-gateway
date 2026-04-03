@@ -13,8 +13,8 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-// appG API密钥信息缓存
-var appG singleflight.Group
+// apiKeyG API密钥信息缓存
+var apiKeyG singleflight.Group
 
 // GetApiKeyInfo 获取API密钥信息
 func (app *App) GetApiKeyInfo(secretID string) (*models.APIKeyInfo, bool, error) {
@@ -32,7 +32,7 @@ func (app *App) GetApiKeyInfo(secretID string) (*models.APIKeyInfo, bool, error)
 			return info, true, nil
 		}
 	}
-	v, err, _ := appG.Do(cacheKey, func() (interface{}, error) {
+	v, err, _ := apiKeyG.Do(cacheKey, func() (any, error) {
 		// 二次检查本地缓存, 防止并发进入 SingleFlight 后重复逻辑
 		if val, ok := app.LocalCache.Get(cacheKey); ok {
 			return val, nil

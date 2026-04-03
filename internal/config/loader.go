@@ -25,9 +25,6 @@ func Load() (*Config, error) {
 		fmt.Printf("解析配置文件失败: %v", err)
 		return nil, err
 	}
-	// 从数据库加载
-	config.Services = []Service{}
-	config.Routes = []Route{}
 	return &config, nil
 }
 
@@ -122,9 +119,7 @@ func LoadDatabaseConfig(db *sqlx.DB) (*DatabaseConfig, error) {
 }
 
 // MergeConfig 合并配置
-func MergeConfig(base *Config, dbConfig *DatabaseConfig, services []Service, routes []Route) *Config {
+func MergeConfig(base *Config, dbConfig *DatabaseConfig) *Config {
 	base.DatabaseConfig = *dbConfig
-	base.Services = services
-	base.Routes = routes
 	return base
 }

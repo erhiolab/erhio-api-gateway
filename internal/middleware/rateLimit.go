@@ -13,12 +13,12 @@ import (
 func RateLimit(app *app.App) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			route, ok := r.Context().Value(utils.RouteKey).(*config.Route)
+			route, ok := r.Context().Value(utils.RouteKey).(*models.Route)
 			if !ok {
 				utils.NotFound(w)
 				return
 			}
-			service, ok := r.Context().Value(utils.ServiceKey).(*config.Service)
+			service, ok := r.Context().Value(utils.ServiceKey).(*models.Service)
 			if !ok || len(service.Nodes) == 0 {
 				utils.BadGateway(w)
 				return
@@ -34,8 +34,8 @@ func RateLimit(app *app.App) Middleware {
 				return
 			}
 			cfg := config.Get()
-			qpmKey := cfg.Redis.ProjectPrefix + ":qpm:" + service.Name + ":" + route.Path
-			qpsKey := cfg.Redis.ProjectPrefix + ":qps:" + service.Name + ":" + route.Path
+			qpmKey := cfg.Redis.ProjectPrefix + ":limit:qpm:" + service.Name + ":" + route.Path
+			qpsKey := cfg.Redis.ProjectPrefix + ":limit:qps:" + service.Name + ":" + route.Path
 			var qpmLimit int64
 			var qpsLimit int64
 			if apiKeyInfo.SecretID != "" {
@@ -46,8 +46,8 @@ func RateLimit(app *app.App) Middleware {
 			} else {
 				qpmKey += ":ip:" + ip.IP
 				qpsKey += ":ip:" + ip.IP
-				route := config.Route{}
-				if routePtr, ok := r.Context().Value(utils.RouteKey).(*config.Route); ok {
+				route := models.Route{}
+				if routePtr, ok := r.Context().Value(utils.RouteKey).(*models.Route); ok {
 					route = *routePtr
 				}
 				qpmLimit = route.QPM

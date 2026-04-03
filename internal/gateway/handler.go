@@ -2,8 +2,8 @@ package gateway
 
 import (
 	"elake-api-gateway/internal/app"
-	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/middleware"
+	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 )
@@ -11,7 +11,7 @@ import (
 // Handler 处理请求
 func Handler(app *app.App) http.Handler {
 	core := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		service, ok := r.Context().Value(utils.ServiceKey).(*config.Service)
+		service, ok := r.Context().Value(utils.ServiceKey).(*models.Service)
 		if !ok {
 			utils.BadGateway(w)
 			return
@@ -20,7 +20,7 @@ func Handler(app *app.App) http.Handler {
 		Proxy(node.NodeURL, w, r)
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route, ok := r.Context().Value(utils.RouteKey).(*config.Route)
+		route, ok := r.Context().Value(utils.RouteKey).(*models.Route)
 		if !ok {
 			utils.NotFound(w)
 			return
@@ -32,7 +32,7 @@ func Handler(app *app.App) http.Handler {
 }
 
 // Build 构建中间件链
-func Build(route *config.Route, app *app.App) []middleware.Middleware {
+func Build(route *models.Route, app *app.App) []middleware.Middleware {
 	var mws []middleware.Middleware
 	if route.RequireAuth {
 		mws = append(mws, middleware.Auth(app))
