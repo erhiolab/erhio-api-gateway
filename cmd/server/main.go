@@ -49,11 +49,11 @@ func main() {
 	handler := middleware.Chain(
 		core,
 		middleware.Recovery(),
+		middleware.TraceID(),
 		middleware.HealthCheck(),
+		middleware.GetRealIP(appEngine),
 		middleware.Router(appEngine),
 		middleware.GetUserAgent(),
-		middleware.GetRealIP(appEngine),
-		middleware.TraceID(),
 		middleware.Logging(),
 	)
 

@@ -16,6 +16,8 @@ const (
 	ClientIPKey contextKey = "client_ip"
 	// UserAgentKey 客户端 User-Agent 键
 	UserAgentKey contextKey = "user_agent"
+	// AuthRequirementKey 认证要求键
+	AuthRequirementKey contextKey = "auth_requirement"
 	// ApiKeyInfoKey API密钥信息键值
 	ApiKeyInfoKey contextKey = "api_key_info"
 )

@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Recovery 恢复插件
+// Recovery 服务恢复插件
 func Recovery() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
