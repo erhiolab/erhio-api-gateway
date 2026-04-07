@@ -291,8 +291,9 @@ func DownloadNewVersion() (string, error) {
 	cfg := config.Get().IPDB
 	for i := 1; i <= cfg.MaxDownloadAttempts; i++ {
 		if i > 1 {
-			logger.Log.Info(fmt.Sprintf("IPDB 第 %d 次尝试重新下载", i))
-			time.Sleep(2 * time.Second)
+			retryTime := time.Duration(i*i) * time.Second
+			logger.Log.Info(fmt.Sprintf("%v 秒后, 第 %d 次尝试重新下载 IPDB", retryTime, i))
+			time.Sleep(retryTime)
 		}
 		if !AllowDownloadToday() {
 			return "", fmt.Errorf("今日下载次数已用尽")
@@ -300,6 +301,17 @@ func DownloadNewVersion() (string, error) {
 		fileName, err := DownloadAndVerifyOnce()
 		if err == nil {
 			return fileName, nil
+		}
+		// 检查是否是DNS相关错误
+		if IsDNSError(err) {
+			wait := time.Duration(i*i*5) * time.Second
+			logger.Log.Warn("DNS 解析失败，准备重试",
+				zap.Int("attempt", i),
+				zap.Duration("wait", wait),
+				zap.Error(err),
+			)
+			time.Sleep(wait)
+			continue
 		}
 		logger.Log.Error("下载或校验失败", zap.Int("attempt", i), zap.Error(err))
 		// 如果是下载次数限制错误, 直接返回不再重试
@@ -399,6 +411,7 @@ func DownloadFile(url, dest string) error {
 	// 创建客户端
 	client := grab.NewClient()
 	client.HTTPClient = &http.Client{
+		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
 			Proxy:               http.ProxyFromEnvironment,
 			TLSHandshakeTimeout: 10 * time.Second,
@@ -442,6 +455,14 @@ func DownloadFile(url, dest string) error {
 	}
 	logger.Log.Info("IPDB 下载完成")
 	return nil
+}
+
+// IsDNSError 检查错误是否是DNS相关错误
+func IsDNSError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "no such host") || strings.Contains(err.Error(), "Temporary failure in name resolution")
 }
 
 // IsDownloadLimitError 检查下载的文件是否是HTML错误页面(下载次数限制)
