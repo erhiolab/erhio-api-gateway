@@ -18,10 +18,10 @@ func Logging() Middleware {
 			wrapped := &ResponseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
 			// 先执行请求
 			next.ServeHTTP(wrapped, r)
-			// 请求执行完成后再记录日志
-			serviceID := int64(0)
-			if service, ok := r.Context().Value(utils.ServiceKey).(*models.Service); ok {
-				serviceID = service.ID
+			node, ok := r.Context().Value(utils.SelectedNodeKey).(*models.ServiceNode)
+			if !ok {
+				utils.BadGateway(w)
+				return
 			}
 			requestID := "unknown"
 			if id, ok := r.Context().Value(utils.RequestIDKey).(string); ok {
@@ -43,7 +43,8 @@ func Logging() Middleware {
 			durationNs := duration.Nanoseconds()
 			responseSize := int64(wrapped.Size)
 			logger.RequestLog.Info("HTTP请求",
-				zap.Int64("serviceID", serviceID),
+				zap.Int64("serviceID", node.ServiceID),
+				zap.Int64("nodeID", node.ID),
 				zap.String("requestID", requestID),
 				zap.Any("clientIP", clientIP),
 				zap.String("method", method),

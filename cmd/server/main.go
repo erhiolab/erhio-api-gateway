@@ -53,6 +53,7 @@ func main() {
 		middleware.HealthCheck(),
 		middleware.GetRealIP(appEngine),
 		middleware.Router(appEngine),
+		middleware.LoadBalancer(),
 		middleware.GetUserAgent(),
 		middleware.Logging(),
 	)

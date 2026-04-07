@@ -11,12 +11,11 @@ import (
 // Handler 处理请求
 func Handler(app *app.App) http.Handler {
 	core := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		service, ok := r.Context().Value(utils.ServiceKey).(*models.Service)
+		node, ok := r.Context().Value(utils.SelectedNodeKey).(*models.ServiceNode)
 		if !ok {
 			utils.BadGateway(w)
 			return
 		}
-		node := service.Nodes[0]
 		Proxy(node.NodeURL, w, r)
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
