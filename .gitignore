@@ -1,2 +1,4 @@
 /logs/
-/server.exe
+/tmp/
+/test/
+/data/IPDB-*.*

@@ -1,17 +1,21 @@
 package gateway
 
 import (
+	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 // Proxy 代理请求
 func Proxy(target string, w http.ResponseWriter, r *http.Request) {
 	parseURL, err := url.Parse(target)
 	if err != nil {
+		logger.WithRequestLogCtx(r.Context()).Error("代理请求: 无法解析目标URL", zap.Error(err))
 		utils.BadGateway(w)
 		return
 	}

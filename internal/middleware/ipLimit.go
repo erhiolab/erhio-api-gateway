@@ -2,37 +2,53 @@ package middleware
 
 import (
 	"elake-api-gateway/internal/config"
+	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 // IPLimit IP限制器插件
 func IPLimit() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			clientIP, ok := r.Context().Value(utils.ClientIPKey).(*models.IPLocation)
+			ctx := r.Context()
+			clientIP, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation)
 			if !ok {
+				logger.WithRequestLogCtx(ctx).Error("IP限制器插件: 客户端IP信息不存在",
+					zap.String("ip", clientIP.IP),
+				)
 				utils.BadRequest(w, "ip")
 				return
 			}
 			// 全局IP黑名单
 			cfg := config.Get()
 			if len(cfg.DatabaseConfig.Auth.IPBlacklist) > 0 && utils.Contains(cfg.DatabaseConfig.Auth.IPBlacklist, clientIP.IP) {
+				logger.WithRequestLogCtx(ctx).Error("IP限制器插件: 客户端IP在全局IP黑名单中, 被拒绝访问",
+					zap.String("ip", clientIP.IP),
+				)
 				utils.Forbidden(w, "IP is globally blacklisted")
 				return
 			}
 			// 自定义IP限制
-			if val := r.Context().Value(utils.ApiKeyInfoKey); val != nil {
+			if val := ctx.Value(utils.ApiKeyInfoKey); val != nil {
 				if apiKeyInfo, ok := val.(*models.APIKeyInfo); ok {
 					switch apiKeyInfo.IPFilterType {
 					case 1:
 						if !utils.Contains(apiKeyInfo.IPList, clientIP.IP) {
+							logger.WithRequestLogCtx(ctx).Error("IP限制器插件: 客户端IP不在API Key白名单中, 被拒绝访问",
+								zap.String("ip", clientIP.IP),
+							)
 							utils.Forbidden(w, "IP not allowed by API Key whitelist")
 							return
 						}
 					case 2:
 						if utils.Contains(apiKeyInfo.IPList, clientIP.IP) {
+							logger.WithRequestLogCtx(ctx).Error("IP限制器插件: 客户端IP在API Key黑名单中, 被拒绝访问",
+								zap.String("ip", clientIP.IP),
+							)
 							utils.Forbidden(w, "IP blocked by API Key blacklist")
 							return
 						}

@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"elake-api-gateway/internal/app"
+	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/middleware"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
@@ -11,16 +12,20 @@ import (
 // Handler 处理请求
 func Handler(app *app.App) http.Handler {
 	core := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		node, ok := r.Context().Value(utils.SelectedNodeKey).(*models.ServiceNode)
+		ctx := r.Context()
+		node, ok := ctx.Value(utils.SelectedNodeKey).(*models.ServiceNode)
 		if !ok {
+			logger.WithRequestLogCtx(ctx).Error("处理请求: 未选择服务节点")
 			utils.BadGateway(w)
 			return
 		}
 		Proxy(node.NodeURL, w, r)
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route, ok := r.Context().Value(utils.RouteKey).(*models.Route)
+		ctx := r.Context()
+		route, ok := ctx.Value(utils.RouteKey).(*models.Route)
 		if !ok {
+			logger.WithRequestLogCtx(ctx).Error("处理请求: 路由不存在")
 			utils.NotFound(w)
 			return
 		}

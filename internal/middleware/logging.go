@@ -14,21 +14,17 @@ import (
 func Logging() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
 			start := time.Now()
 			wrapped := &ResponseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
 			// 先执行请求
 			next.ServeHTTP(wrapped, r)
-			node, ok := r.Context().Value(utils.SelectedNodeKey).(*models.ServiceNode)
-			if !ok {
-				utils.BadGateway(w)
-				return
-			}
-			requestID := "unknown"
-			if id, ok := r.Context().Value(utils.RequestIDKey).(string); ok {
-				requestID = id
+			node := models.ServiceNode{}
+			if nodePtr, ok := ctx.Value(utils.SelectedNodeKey).(*models.ServiceNode); ok {
+				node = *nodePtr
 			}
 			clientIP := models.IPLocation{}
-			if ipPtr, ok := r.Context().Value(utils.ClientIPKey).(*models.IPLocation); ok && ipPtr != nil {
+			if ipPtr, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation); ok && ipPtr != nil {
 				clientIP = *ipPtr
 			}
 			method := r.Method
@@ -36,16 +32,15 @@ func Logging() Middleware {
 			status := wrapped.StatusCode
 			origin := r.Header.Get("Origin")
 			userAgent := models.UserAgent{}
-			if uaPtr, ok := r.Context().Value(utils.UserAgentKey).(*models.UserAgent); ok && uaPtr != nil {
+			if uaPtr, ok := ctx.Value(utils.UserAgentKey).(*models.UserAgent); ok && uaPtr != nil {
 				userAgent = *uaPtr
 			}
 			duration := time.Since(start)
 			durationNs := duration.Nanoseconds()
 			responseSize := int64(wrapped.Size)
-			logger.RequestLog.Info("HTTP请求",
+			logger.WithRequestLogCtx(ctx).Info("HTTP请求",
 				zap.Int64("serviceID", node.ServiceID),
 				zap.Int64("nodeID", node.ID),
-				zap.String("requestID", requestID),
 				zap.Any("clientIP", clientIP),
 				zap.String("method", method),
 				zap.String("path", path),

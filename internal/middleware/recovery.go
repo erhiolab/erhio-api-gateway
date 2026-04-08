@@ -15,7 +15,7 @@ func Recovery() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if err := recover(); err != nil {
-					logger.Log.Error("panic recovered",
+					logger.WithRequestLogCtx(r.Context()).Error("服务恢复插件: panic recovered",
 						zap.Any("error", err),
 						zap.String("method", r.Method),
 						zap.String("path", r.URL.Path),

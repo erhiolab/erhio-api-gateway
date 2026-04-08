@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
@@ -10,18 +11,21 @@ import (
 func Authorizer() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// 从上下文获取API密钥信息
-			apiKeyInfo, ok := r.Context().Value(utils.ApiKeyInfoKey).(*models.APIKeyInfo)
+			ctx := r.Context()
+			apiKeyInfo, ok := ctx.Value(utils.ApiKeyInfoKey).(*models.APIKeyInfo)
 			if !ok {
+				logger.WithRequestLogCtx(ctx).Error("鉴权插件: 上下文中缺少API密钥信息")
 				utils.Unauthorized(w, "Invalid SecretID")
 				return
 			}
-			route, ok := r.Context().Value(utils.RouteKey).(*models.Route)
+			route, ok := ctx.Value(utils.RouteKey).(*models.Route)
 			if !ok {
+				logger.WithRequestLogCtx(ctx).Error("鉴权插件: 上下文中缺少路由信息")
 				utils.NotFound(w)
 				return
 			}
 			if !utils.Contains(apiKeyInfo.RouteIDs, route.ID) {
+				logger.WithRequestLogCtx(ctx).Error("鉴权插件: API密钥未授权访问该路由")
 				utils.Forbidden(w, "No access to this route")
 				return
 			}

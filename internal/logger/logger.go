@@ -1,7 +1,9 @@
 package logger
 
 import (
+	"context"
 	"elake-api-gateway/internal/config"
+	"elake-api-gateway/internal/utils"
 	"os"
 
 	"go.uber.org/zap"
@@ -50,4 +52,16 @@ func createLogger(logPath string, cfg config.LoggerConfig) *zap.Logger {
 		zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), consoleSyncer, zapcore.DebugLevel),
 	)
 	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+}
+
+// WithRequestLogCtx 从 context 中获取 requestID 并添加到日志中
+func WithRequestLogCtx(ctx context.Context) *zap.Logger {
+	if ctx == nil {
+		return RequestLog
+	}
+	// 从 context 中获取 requestID
+	if id, ok := ctx.Value(utils.RequestIDKey).(string); ok {
+		return RequestLog.With(zap.String("request_id", id))
+	}
+	return RequestLog
 }

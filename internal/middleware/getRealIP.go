@@ -3,28 +3,40 @@ package middleware
 import (
 	"context"
 	"elake-api-gateway/internal/app"
+	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net"
 	"net/http"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 // GetRealIP IP解析插件
 func GetRealIP(app *app.App) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
 			ip := GetClientIP(r)
 			if ip == "" {
+				logger.WithRequestLogCtx(ctx).Error("IP解析插件: 客户端IP为空")
 				utils.BadRequest(w, "ip")
 				return
 			}
 			rec, err := app.IPDB.GetAll(ip)
 			if err != nil {
+				logger.WithRequestLogCtx(ctx).Error("IP解析插件: 解析失败",
+					zap.String("ip", ip),
+					zap.Error(err),
+				)
 				utils.InternalServerError(w)
 				return
 			}
 			if rec == nil {
+				logger.WithRequestLogCtx(ctx).Error("IP解析插件: 解析失败: 未找到IP信息",
+					zap.String("ip", ip),
+				)
 				utils.BadRequest(w, "ip")
 				return
 			}
@@ -39,7 +51,7 @@ func GetRealIP(app *app.App) Middleware {
 				Zipcode:      rec.Zipcode,
 				Timezone:     rec.Timezone,
 			}
-			ctx := context.WithValue(r.Context(), utils.ClientIPKey, location)
+			ctx = context.WithValue(ctx, utils.ClientIPKey, location)
 			r.Header.Set("X-Real-IP", ip)
 			// 追加到 X-Forwarded-For
 			xff := r.Header.Get("X-Forwarded-For")

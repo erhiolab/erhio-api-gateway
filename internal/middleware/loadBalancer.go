@@ -2,10 +2,13 @@ package middleware
 
 import (
 	"context"
+	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 // WeightedNode 用于平滑加权轮询的运行时节点
@@ -26,18 +29,27 @@ var (
 func LoadBalancer() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			service, ok := r.Context().Value(utils.ServiceKey).(*models.Service)
+			ctx := r.Context()
+			service, ok := ctx.Value(utils.ServiceKey).(*models.Service)
 			if !ok || len(service.Nodes) == 0 {
+				logger.WithRequestLogCtx(ctx).Error("负载均衡插件: 服务没有活动节点, 无法负载均衡",
+					zap.Int64("service_id", service.ID),
+					zap.String("service_name", service.Name),
+				)
 				utils.BadGateway(w)
 				return
 			}
 			nodes := getRuntimeNodes(service)
 			if len(nodes) == 0 {
+				logger.WithRequestLogCtx(ctx).Error("负载均衡插件: 服务没有活动节点, 无法负载均衡",
+					zap.Int64("service_id", service.ID),
+					zap.String("service_name", service.Name),
+				)
 				utils.BadGateway(w)
 				return
 			}
 			selected := selectSmoothNode(nodes)
-			ctx := context.WithValue(r.Context(), utils.SelectedNodeKey, selected)
+			ctx = context.WithValue(ctx, utils.SelectedNodeKey, selected)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
