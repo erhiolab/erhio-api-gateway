@@ -243,18 +243,24 @@ func ExtractYearMonth(filePath string) (string, error) {
 // ShouldUpdate 判断是否需要更新
 func ShouldUpdate(currentFile string) bool {
 	now := time.Now()
-	// 只在每月 3 号执行
-	if now.Day() < 3 {
+	// 只在每月 3, 4, 5 号尝试, 错过这几天就不搜了, 避免每天轮询
+	if now.Day() < 3 || now.Day() > 5 {
 		return false
 	}
 	currentYM, err := ExtractYearMonth(currentFile)
-	if err != nil {
-		// 文件错误, 直接更新
-		return true
-	}
 	nowYM := now.Format("200601")
-	// 如果当前文件月份 != 当前月份
-	return currentYM != nowYM
+	if err == nil && currentYM == nowYM {
+		return false
+	}
+	// 检查今天是否还有剩余重试次数
+	downloadCounter.mu.Lock()
+	defer downloadCounter.mu.Unlock()
+	today := now.Format("20060102")
+	if downloadCounter.day == today && downloadCounter.used >= config.Get().IPDB.MaxDownloadAttempts {
+		// 如果今天的 5 次机会已经用完了, 等明天凌晨 3 点
+		return false
+	}
+	return true
 }
 
 // Update 更新 IPDB
