@@ -15,14 +15,14 @@ func CountryLimit() Middleware {
 			ctx := r.Context()
 			clientIP, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation)
 			if !ok {
-				logger.WithRequestLogCtx(ctx).Error("国家限制器插件: 客户端IP信息不存在")
+				logger.WithRequestLogCtx(ctx).Warn("国家限制器插件: 客户端IP信息不存在")
 				utils.BadRequest(w, "ip")
 				return
 			}
 			// 全局国家黑名单
 			cfg := config.Get()
 			if len(cfg.DatabaseConfig.Auth.CountryBlackList) > 0 && isCountryInList(cfg.DatabaseConfig.Auth.CountryBlackList, clientIP) {
-				logger.WithRequestLogCtx(ctx).Error("国家限制器插件: 客户端IP在全局国家黑名单中, 被拒绝访问")
+				logger.WithRequestLogCtx(ctx).Warn("国家限制器插件: 客户端IP在全局国家黑名单中, 被拒绝访问")
 				utils.Forbidden(w, "Country is globally blacklisted")
 				return
 			}
@@ -32,13 +32,13 @@ func CountryLimit() Middleware {
 					switch apiKeyInfo.CountryFilterType {
 					case 1:
 						if !isCountryInList(apiKeyInfo.CountryList, clientIP) {
-							logger.WithRequestLogCtx(ctx).Error("国家限制器插件: 客户端IP不在API密钥白名单中, 被拒绝访问")
+							logger.WithRequestLogCtx(ctx).Warn("国家限制器插件: 客户端IP不在API密钥白名单中, 被拒绝访问")
 							utils.Forbidden(w, "Country not allowed by API Key whitelist")
 							return
 						}
 					case 2:
 						if isCountryInList(apiKeyInfo.CountryList, clientIP) {
-							logger.WithRequestLogCtx(ctx).Error("国家限制器插件: 客户端IP在API密钥黑名单中, 被拒绝访问")
+							logger.WithRequestLogCtx(ctx).Warn("国家限制器插件: 客户端IP在API密钥黑名单中, 被拒绝访问")
 							utils.Forbidden(w, "Country blocked by API Key blacklist")
 							return
 						}

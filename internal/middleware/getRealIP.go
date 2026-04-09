@@ -20,7 +20,7 @@ func GetRealIP(app *app.App) Middleware {
 			ctx := r.Context()
 			ip := GetClientIP(r)
 			if ip == "" {
-				logger.WithRequestLogCtx(ctx).Error("IP解析插件: 客户端IP为空")
+				logger.WithRequestLogCtx(ctx).Warn("IP解析插件: 客户端IP为空")
 				utils.BadRequest(w, "ip")
 				return
 			}
@@ -34,7 +34,7 @@ func GetRealIP(app *app.App) Middleware {
 				return
 			}
 			if rec == nil {
-				logger.WithRequestLogCtx(ctx).Error("IP解析插件: 解析失败: 未找到IP信息",
+				logger.WithRequestLogCtx(ctx).Warn("IP解析插件: 解析失败: 未找到IP信息",
 					zap.String("ip", ip),
 				)
 				utils.BadRequest(w, "ip")

@@ -17,7 +17,7 @@ func IPLimit() Middleware {
 			ctx := r.Context()
 			clientIP, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation)
 			if !ok {
-				logger.WithRequestLogCtx(ctx).Error("IP限制器插件: 客户端IP信息不存在",
+				logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP信息不存在",
 					zap.String("ip", clientIP.IP),
 				)
 				utils.BadRequest(w, "ip")
@@ -26,7 +26,7 @@ func IPLimit() Middleware {
 			// 全局IP黑名单
 			cfg := config.Get()
 			if len(cfg.DatabaseConfig.Auth.IPBlacklist) > 0 && utils.Contains(cfg.DatabaseConfig.Auth.IPBlacklist, clientIP.IP) {
-				logger.WithRequestLogCtx(ctx).Error("IP限制器插件: 客户端IP在全局IP黑名单中, 被拒绝访问",
+				logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP在全局IP黑名单中, 被拒绝访问",
 					zap.String("ip", clientIP.IP),
 				)
 				utils.Forbidden(w, "IP is globally blacklisted")
@@ -38,7 +38,7 @@ func IPLimit() Middleware {
 					switch apiKeyInfo.IPFilterType {
 					case 1:
 						if !utils.Contains(apiKeyInfo.IPList, clientIP.IP) {
-							logger.WithRequestLogCtx(ctx).Error("IP限制器插件: 客户端IP不在API Key白名单中, 被拒绝访问",
+							logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP不在API Key白名单中, 被拒绝访问",
 								zap.String("ip", clientIP.IP),
 							)
 							utils.Forbidden(w, "IP not allowed by API Key whitelist")
@@ -46,7 +46,7 @@ func IPLimit() Middleware {
 						}
 					case 2:
 						if utils.Contains(apiKeyInfo.IPList, clientIP.IP) {
-							logger.WithRequestLogCtx(ctx).Error("IP限制器插件: 客户端IP在API Key黑名单中, 被拒绝访问",
+							logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP在API Key黑名单中, 被拒绝访问",
 								zap.String("ip", clientIP.IP),
 							)
 							utils.Forbidden(w, "IP blocked by API Key blacklist")

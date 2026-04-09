@@ -15,7 +15,7 @@ func Handler(app *app.App) http.Handler {
 		ctx := r.Context()
 		node, ok := ctx.Value(utils.SelectedNodeKey).(*models.ServiceNode)
 		if !ok {
-			logger.WithRequestLogCtx(ctx).Error("处理请求: 未选择服务节点")
+			logger.WithRequestLogCtx(ctx).Warn("处理请求: 未选择服务节点")
 			utils.BadGateway(w)
 			return
 		}
@@ -25,7 +25,7 @@ func Handler(app *app.App) http.Handler {
 		ctx := r.Context()
 		route, ok := ctx.Value(utils.RouteKey).(*models.Route)
 		if !ok {
-			logger.WithRequestLogCtx(ctx).Error("处理请求: 路由不存在")
+			logger.WithRequestLogCtx(ctx).Warn("处理请求: 路由不存在")
 			utils.NotFound(w)
 			return
 		}

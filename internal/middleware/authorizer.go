@@ -25,7 +25,7 @@ func Authorizer() Middleware {
 				return
 			}
 			if !utils.Contains(apiKeyInfo.RouteIDs, route.ID) {
-				logger.WithRequestLogCtx(ctx).Error("鉴权插件: API密钥未授权访问该路由")
+				logger.WithRequestLogCtx(ctx).Warn("鉴权插件: API密钥未授权访问该路由")
 				utils.Forbidden(w, "No access to this route")
 				return
 			}

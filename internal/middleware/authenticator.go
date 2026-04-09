@@ -24,22 +24,22 @@ func Authenticator(app *app.App) Middleware {
 				return
 			}
 			if authRequirement.SecretID == "" {
-				logger.WithRequestLogCtx(ctx).Error("身份验证插件: Authorization header中缺少SecretID")
+				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: Authorization header中缺少SecretID")
 				utils.BadRequest(w, "Authorization")
 				return
 			}
 			if authRequirement.Timestamp == "" {
-				logger.WithRequestLogCtx(ctx).Error("身份验证插件: X-Timestamp header中缺少时间戳")
+				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Timestamp header中缺少时间戳")
 				utils.BadRequest(w, "X-Timestamp")
 				return
 			}
 			if authRequirement.Nonce == "" {
-				logger.WithRequestLogCtx(ctx).Error("身份验证插件: X-Nonce header中缺少Nonce")
+				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Nonce header中缺少Nonce")
 				utils.BadRequest(w, "X-Nonce")
 				return
 			}
 			if authRequirement.Signature == "" {
-				logger.WithRequestLogCtx(ctx).Error("身份验证插件: X-Signature header中缺少签名")
+				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Signature header中缺少签名")
 				utils.BadRequest(w, "X-Signature")
 				return
 			}
@@ -61,7 +61,7 @@ func Authenticator(app *app.App) Middleware {
 			}
 			// 未启用API密钥, API密钥被封禁
 			if !apiKeyInfo.Enabled || apiKeyInfo.Banned != 0 {
-				logger.WithRequestLogCtx(ctx).Error("身份验证插件: API密钥未启用或已被封禁",
+				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: API密钥未启用或已被封禁",
 					zap.String("SecretID", authRequirement.SecretID),
 				)
 				utils.Forbidden(w, "Key disabled or banned")
@@ -69,7 +69,7 @@ func Authenticator(app *app.App) Middleware {
 			}
 			// API密钥有过期时间, 且已过期
 			if apiKeyInfo.ExpiresAt != nil && time.Now().After(*apiKeyInfo.ExpiresAt) {
-				logger.WithRequestLogCtx(ctx).Error("身份验证插件: API密钥已过期",
+				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: API密钥已过期",
 					zap.String("SecretID", authRequirement.SecretID),
 				)
 				utils.Forbidden(w, "Key expired")
@@ -83,7 +83,7 @@ func Authenticator(app *app.App) Middleware {
 				authRequirement.Nonce,
 				authRequirement.Signature,
 			) {
-				logger.WithRequestLogCtx(ctx).Error("身份验证插件: 签名校验失败",
+				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: 签名校验失败",
 					zap.String("SecretID", authRequirement.SecretID),
 					zap.String("Timestamp", authRequirement.Timestamp),
 					zap.String("Nonce", authRequirement.Nonce),

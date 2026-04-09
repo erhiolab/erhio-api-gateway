@@ -32,7 +32,7 @@ func LoadBalancer() Middleware {
 			ctx := r.Context()
 			service, ok := ctx.Value(utils.ServiceKey).(*models.Service)
 			if !ok || len(service.Nodes) == 0 {
-				logger.WithRequestLogCtx(ctx).Error("负载均衡插件: 服务没有活动节点, 无法负载均衡",
+				logger.WithRequestLogCtx(ctx).Warn("负载均衡插件: 服务没有活动节点, 无法负载均衡",
 					zap.Int64("service_id", service.ID),
 					zap.String("service_name", service.Name),
 				)
@@ -41,7 +41,7 @@ func LoadBalancer() Middleware {
 			}
 			nodes := getRuntimeNodes(service)
 			if len(nodes) == 0 {
-				logger.WithRequestLogCtx(ctx).Error("负载均衡插件: 服务没有活动节点, 无法负载均衡",
+				logger.WithRequestLogCtx(ctx).Warn("负载均衡插件: 服务没有活动节点, 无法负载均衡",
 					zap.Int64("service_id", service.ID),
 					zap.String("service_name", service.Name),
 				)
