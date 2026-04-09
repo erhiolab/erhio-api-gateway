@@ -16,3 +16,8 @@ type ServiceNode struct {
 	Weight    int    `db:"weight"`
 	Status    int    `db:"status"`
 }
+
+// SelectedNode 请求当前选中的上游节点
+type SelectedNode struct {
+	Node *ServiceNode
+}

@@ -20,8 +20,8 @@ func Logging() Middleware {
 			// 先执行请求
 			next.ServeHTTP(wrapped, r)
 			node := models.ServiceNode{}
-			if nodePtr, ok := ctx.Value(utils.SelectedNodeKey).(*models.ServiceNode); ok {
-				node = *nodePtr
+			if selected, ok := ctx.Value(utils.SelectedNodeKey).(*models.SelectedNode); ok && selected != nil && selected.Node != nil {
+				node = *selected.Node
 			}
 			clientIP := models.IPLocation{}
 			if ipPtr, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation); ok && ipPtr != nil {

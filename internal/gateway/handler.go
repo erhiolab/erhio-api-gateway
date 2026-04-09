@@ -13,13 +13,19 @@ import (
 func Handler(app *app.App) http.Handler {
 	core := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		node, ok := ctx.Value(utils.SelectedNodeKey).(*models.ServiceNode)
-		if !ok {
+		selectedNode, ok := ctx.Value(utils.SelectedNodeKey).(*models.SelectedNode)
+		if !ok || selectedNode == nil || selectedNode.Node == nil {
 			logger.WithRequestLogCtx(ctx).Warn("处理请求: 未选择服务节点")
 			utils.BadGateway(w)
 			return
 		}
-		Proxy(node.NodeURL, w, r)
+		service, ok := ctx.Value(utils.ServiceKey).(*models.Service)
+		if !ok || service == nil {
+			logger.WithRequestLogCtx(ctx).Warn("处理请求: 未找到服务信息")
+			utils.BadGateway(w)
+			return
+		}
+		Proxy(service, selectedNode, w, r)
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
