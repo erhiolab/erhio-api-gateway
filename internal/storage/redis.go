@@ -3,8 +3,8 @@ package storage
 import (
 	"context"
 	"elake-api-gateway/internal/config"
-	"elake-api-gateway/internal/healthManager"
 	"elake-api-gateway/internal/logger"
+	"elake-api-gateway/internal/service/healthManager"
 	"fmt"
 	"time"
 

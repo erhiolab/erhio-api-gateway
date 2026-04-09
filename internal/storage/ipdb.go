@@ -3,8 +3,8 @@ package storage
 import (
 	"archive/zip"
 	"elake-api-gateway/internal/config"
-	"elake-api-gateway/internal/healthManager"
 	"elake-api-gateway/internal/logger"
+	"elake-api-gateway/internal/service/healthManager"
 	"errors"
 	"fmt"
 	"io"
@@ -311,7 +311,7 @@ func DownloadNewVersion() (string, error) {
 		// 检查是否是DNS相关错误
 		if IsDNSError(err) {
 			wait := time.Duration(i*i*5) * time.Second
-			logger.Log.Warn("DNS 解析失败，准备重试",
+			logger.Log.Warn("DNS 解析失败, 准备重试",
 				zap.Int("attempt", i),
 				zap.Duration("wait", wait),
 				zap.Error(err),

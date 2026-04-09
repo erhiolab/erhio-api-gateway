@@ -11,16 +11,9 @@ import (
 	"go.uber.org/zap"
 )
 
-// WeightedNode 用于平滑加权轮询的运行时节点
-type WeightedNode struct {
-	Node          *models.ServiceNode
-	CurrentWeight int
-	mu            sync.Mutex
-}
-
 var (
 	// runtimeNodes 运行时节点映射
-	runtimeNodes = make(map[int64][]*WeightedNode)
+	runtimeNodes = make(map[int64][]*models.WeightedNode)
 	// nodesMu 节点映射互斥锁
 	nodesMu sync.RWMutex
 )
@@ -56,11 +49,11 @@ func LoadBalancer() Middleware {
 }
 
 // selectSmoothNode 平滑加权
-func selectSmoothNode(nodes []*WeightedNode) *models.ServiceNode {
+func selectSmoothNode(nodes []*models.WeightedNode) *models.ServiceNode {
 	if len(nodes) == 1 {
 		return nodes[0].Node
 	}
-	var best *WeightedNode
+	var best *models.WeightedNode
 	totalWeight := 0
 	nodesMu.Lock()
 	defer nodesMu.Unlock()
@@ -79,7 +72,7 @@ func selectSmoothNode(nodes []*WeightedNode) *models.ServiceNode {
 }
 
 // getRuntimeNodes 获取运行时的节点包装对象
-func getRuntimeNodes(service *models.Service) []*WeightedNode {
+func getRuntimeNodes(service *models.Service) []*models.WeightedNode {
 	nodesMu.RLock()
 	wnodes, exists := runtimeNodes[service.ID]
 	nodesMu.RUnlock()
@@ -94,7 +87,7 @@ func getRuntimeNodes(service *models.Service) []*WeightedNode {
 			}
 		}
 		if !needUpdate {
-			var active []*WeightedNode
+			var active []*models.WeightedNode
 			for _, n := range wnodes {
 				if n.Node.Status == 1 {
 					active = append(active, n)
@@ -106,9 +99,9 @@ func getRuntimeNodes(service *models.Service) []*WeightedNode {
 	// 初始化运行时节点
 	nodesMu.Lock()
 	defer nodesMu.Unlock()
-	var newNodes []*WeightedNode
+	var newNodes []*models.WeightedNode
 	for i := range service.Nodes {
-		newNodes = append(newNodes, &WeightedNode{
+		newNodes = append(newNodes, &models.WeightedNode{
 			Node:          &service.Nodes[i],
 			CurrentWeight: 0,
 		})

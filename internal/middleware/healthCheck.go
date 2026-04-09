@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"elake-api-gateway/internal/healthManager"
+	"elake-api-gateway/internal/service/healthManager"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 )
