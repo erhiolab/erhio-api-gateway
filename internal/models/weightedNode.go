@@ -9,6 +9,7 @@ import (
 type WeightedNode struct {
 	Node             *ServiceNode
 	CurrentWeight    int
+	ActiveRequests   int
 	DisabledUntil    time.Time
 	ConsecutiveFails int
 	LastError        string

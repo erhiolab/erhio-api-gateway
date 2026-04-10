@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
-	"elake-api-gateway/internal/middleware"
 	"elake-api-gateway/internal/models"
+	"elake-api-gateway/internal/service/loadBalancer"
 	"elake-api-gateway/internal/utils"
 	"io"
 	"net"
@@ -24,7 +24,7 @@ var (
 	upstreamTransportOnce sync.Once
 )
 
-// Proxy 代理请求，节点失败时自动切换到其他可用节点
+// Proxy 代理请求, 节点失败时自动切换到其他可用节点
 func Proxy(service *models.Service, selected *models.SelectedNode, w http.ResponseWriter, r *http.Request) {
 	if service == nil || selected == nil || selected.Node == nil {
 		utils.BadGateway(w)
@@ -55,14 +55,15 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 			return
 		}
 		proxyErr, retryable := proxyToNode(current.NodeURL, w, r)
+		loadBalancer.ReleaseNodeRequest(service.ID, current.ID)
 		if proxyErr == nil {
-			middleware.MarkNodeSuccess(service.ID, current.ID)
+			loadBalancer.MarkNodeSuccess(service.ID, current.ID)
 			return
 		}
-		middleware.MarkNodeFailure(service.ID, current.ID, proxyErr)
-		next := middleware.SelectNode(service, tried)
+		loadBalancer.MarkNodeFailure(service.ID, current.ID, proxyErr)
+		next := loadBalancer.SelectNode(service, tried)
 		if !retryable || next == nil {
-			logger.WithRequestLogCtx(r.Context()).Error("代理请求: 上游节点不可用",
+			logger.WithRequestLogCtx(r.Context()).Warn("代理请求: 上游节点不可用",
 				zap.Int64("service_id", service.ID),
 				zap.String("service_name", service.Name),
 				zap.Int64("node_id", current.ID),
