@@ -16,6 +16,15 @@ func JSONResponse(w http.ResponseWriter, status int, data any) {
 	}
 }
 
+// Success 成功响应
+func Success(w http.ResponseWriter, data any) {
+	JSONResponse(w, http.StatusOK, map[string]any{
+		"code":      2000,
+		"data":      data,
+		"timestamp": time.Now().UnixMilli(),
+	})
+}
+
 // Error 错误响应
 func Error(w http.ResponseWriter, status, errorCode int, message string) {
 	JSONResponse(w, status, map[string]any{
@@ -26,8 +35,8 @@ func Error(w http.ResponseWriter, status, errorCode int, message string) {
 }
 
 // BadRequest 错误的请求响应
-func BadRequest(w http.ResponseWriter, name string) {
-	Error(w, http.StatusBadRequest, 4000, "client "+name+" is empty")
+func BadRequest(w http.ResponseWriter, message string) {
+	Error(w, http.StatusBadRequest, 4000, message)
 }
 
 // Unauthorized 未授权响应

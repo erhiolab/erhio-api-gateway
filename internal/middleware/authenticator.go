@@ -25,22 +25,22 @@ func Authenticator(app *app.App) Middleware {
 			}
 			if authRequirement.SecretID == "" {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: Authorization header中缺少SecretID")
-				utils.BadRequest(w, "Authorization")
+				utils.BadRequest(w, "empty Authorization")
 				return
 			}
 			if authRequirement.Timestamp == "" {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Timestamp header中缺少时间戳")
-				utils.BadRequest(w, "X-Timestamp")
+				utils.BadRequest(w, "empty X-Timestamp")
 				return
 			}
 			if authRequirement.Nonce == "" {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Nonce header中缺少Nonce")
-				utils.BadRequest(w, "X-Nonce")
+				utils.BadRequest(w, "empty X-Nonce")
 				return
 			}
 			if authRequirement.Signature == "" {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Signature header中缺少签名")
-				utils.BadRequest(w, "X-Signature")
+				utils.BadRequest(w, "empty X-Signature")
 				return
 			}
 			apiKeyInfo, ok, err := app.GetApiKeyInfo(authRequirement.SecretID)

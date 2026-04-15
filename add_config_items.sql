@@ -4,7 +4,8 @@
 INSERT INTO api_gateway_config (id, group_name, type, value, title, description, version)
 VALUES 
 ('gateway.local-cache-expire', 'gateway', 'int', '10', '本地缓存过期时间(分钟)', '默认10分钟, 用于存储本地缓存', 1),
-('gateway.redis-cache-expire', 'gateway', 'int', '60', 'Redis缓存过期时间(分钟)', '默认60分钟, 用于存储Redis缓存', 1);
+('gateway.redis-cache-expire', 'gateway', 'int', '60', 'Redis缓存过期时间(分钟)', '默认60分钟, 用于存储Redis缓存', 1),
+('gateway.api-root', 'gateway', 'string', '/_gateway/api', '网关API根路由', '用于访问网关自身的API接口', 1);
 
 -- 认证配置
 INSERT INTO api_gateway_config (id, group_name, type, value, title, description, version)

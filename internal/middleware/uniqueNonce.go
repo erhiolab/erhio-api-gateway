@@ -22,12 +22,12 @@ func UniqueNonce(app *app.App) Middleware {
 			authRequirement, ok := ctx.Value(utils.AuthRequirementKey).(*models.AuthRequirement)
 			if !ok || authRequirement.SecretID == "" {
 				logger.WithRequestLogCtx(ctx).Warn("唯一性Nonce插件: Authorization header中缺少SecretID")
-				utils.BadRequest(w, "Authorization")
+				utils.BadRequest(w, "empty Authorization")
 				return
 			}
 			if authRequirement.Nonce == "" {
 				logger.WithRequestLogCtx(ctx).Warn("唯一性Nonce插件: X-Nonce header中缺少Nonce值")
-				utils.BadRequest(w, "X-Nonce")
+				utils.BadRequest(w, "empty X-Nonce")
 				return
 			}
 			nonceKey := cfg.Redis.ProjectPrefix + ":limit:nonce:" + authRequirement.SecretID + ":" + authRequirement.Nonce

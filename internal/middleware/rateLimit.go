@@ -46,7 +46,7 @@ func RateLimit(app *app.App) Middleware {
 				logger.WithRequestLogCtx(ctx).Warn("限流器插件: 客户端IP不存在",
 					zap.String("ip", ip.IP),
 				)
-				utils.BadRequest(w, "ip")
+				utils.BadRequest(w, "empty ip")
 				return
 			}
 			cfg := config.Get()

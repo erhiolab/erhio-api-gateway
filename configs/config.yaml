@@ -81,7 +81,7 @@ redis:
     # 库索引
     db: 0
     # 项目前缀
-    project-prefix: "elake-api"
+    project-prefix: "elake-api-gateway"
     # 连接池大小
     pool-size: 100
     # 最小空闲连接数

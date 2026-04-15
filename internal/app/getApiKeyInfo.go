@@ -85,8 +85,8 @@ func (app *App) decryptAndCacheLocal(key string, info *models.APIKeyInfo, expire
 	return nil
 }
 
-// ExpiredApiKeyInfoCache 让API密钥信息缓存立刻过期
-func (app *App) ExpiredApiKeyInfoCache(secretID string) error {
+// ClearApiKeyInfoCache 清除API密钥信息缓存
+func (app *App) ClearApiKeyInfoCache(secretID string) error {
 	if secretID == "" {
 		return errors.New("secretID is empty")
 	}
@@ -96,6 +96,26 @@ func (app *App) ExpiredApiKeyInfoCache(secretID string) error {
 	err := app.Redis.Del(cacheKey)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// ClearAllApiKeyInfoCache 清除所有API密钥信息缓存
+func (app *App) ClearAllApiKeyInfoCache() error {
+	cfg := config.Get().Redis
+	pattern := cfg.ProjectPrefix + ":api_key_info:*"
+	keys, err := app.Redis.GetKeysByPattern(pattern)
+	if err != nil {
+		return err
+	}
+	for _, key := range keys {
+		app.LocalCache.Delete(key)
+		if err := app.Redis.Del(key); err != nil {
+			logger.Log.Error("清除API密钥缓存失败",
+				zap.String("key", key),
+				zap.Error(err),
+			)
+		}
 	}
 	return nil
 }

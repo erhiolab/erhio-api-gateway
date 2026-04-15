@@ -5,6 +5,7 @@ type GatewayConfig struct {
 	Port     int    `yaml:"port"`
 	DataPath string `yaml:"data-path"`
 	TempPath string `yaml:"temp-path"`
+	ApiRoot  string `yaml:"api-root"`
 }
 
 // LoggerConfig 日志配置

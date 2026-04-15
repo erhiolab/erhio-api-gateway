@@ -16,7 +16,7 @@ func CountryLimit() Middleware {
 			clientIP, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation)
 			if !ok {
 				logger.WithRequestLogCtx(ctx).Warn("国家限制器插件: 客户端IP信息不存在")
-				utils.BadRequest(w, "ip")
+				utils.BadRequest(w, "empty ip")
 				return
 			}
 			// 全局国家黑名单

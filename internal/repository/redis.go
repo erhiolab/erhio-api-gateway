@@ -129,6 +129,18 @@ func (r *RedisManager) Exists(key string) (bool, error) {
 	return count > 0, nil
 }
 
+// GetKeysByPattern 通过模式匹配获取所有键
+func (r *RedisManager) GetKeysByPattern(pattern string) ([]string, error) {
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Redis.ReadTimeout)*time.Second)
+	defer cancel()
+	keys, err := r.client.Keys(ctx, pattern).Result()
+	if err != nil {
+		return nil, err
+	}
+	return keys, nil
+}
+
 // Close 关闭 Redis 连接
 func (r *RedisManager) Close() error {
 	if r.client != nil {

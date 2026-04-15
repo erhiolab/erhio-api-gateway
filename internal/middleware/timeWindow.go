@@ -22,7 +22,7 @@ func TimeWindow() Middleware {
 			authRequirement, ok := ctx.Value(utils.AuthRequirementKey).(*models.AuthRequirement)
 			if !ok || authRequirement.Timestamp == "" {
 				logger.WithRequestLogCtx(ctx).Warn("时间窗口插件: X-Timestamp header中缺少时间戳")
-				utils.BadRequest(w, "X-Timestamp")
+				utils.BadRequest(w, "empty X-Timestamp")
 				return
 			}
 			// 校验时间戳

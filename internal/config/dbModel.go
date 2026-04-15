@@ -4,6 +4,7 @@ package config
 type DatabaseConfig struct {
 	LocalCacheExpire int        `yaml:"local-cache-expire"`
 	RedisCacheExpire int        `yaml:"redis-cache-expire"`
+	ApiRoot          string     `yaml:"api-root"`
 	Auth             AuthConfig `yaml:"auth"`
 }
 

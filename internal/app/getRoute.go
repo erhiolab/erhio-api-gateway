@@ -108,15 +108,21 @@ func (app *App) ClearRouteCache(routeID int64) error {
 
 // ClearAllRouteCache 清除所有路由缓存
 func (app *App) ClearAllRouteCache() error {
-	// 从数据库获取所有路由ID
-	routes, err := app.DB.GetAllRoutes()
+	cfg := config.Get()
+	pattern := cfg.Redis.ProjectPrefix + ":route:*"
+	// 通过前缀获取所有路由缓存键
+	keys, err := app.Redis.GetKeysByPattern(pattern)
 	if err != nil {
 		return err
 	}
 	// 清除每个路由的缓存
-	for _, route := range routes {
-		if err := app.ClearRouteCache(route.ID); err != nil {
-			logger.Log.Error("清除路由缓存失败", zap.Int64("routeID", route.ID), zap.Error(err))
+	for _, key := range keys {
+		app.LocalCache.Delete(key)
+		if err := app.Redis.Del(key); err != nil {
+			logger.Log.Error("清除路由缓存失败",
+				zap.String("key", key),
+				zap.Error(err),
+			)
 		}
 	}
 	return nil

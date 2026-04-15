@@ -20,7 +20,7 @@ func IPLimit() Middleware {
 				logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP信息不存在",
 					zap.String("ip", clientIP.IP),
 				)
-				utils.BadRequest(w, "ip")
+				utils.BadRequest(w, "empty ip")
 				return
 			}
 			// 全局IP黑名单

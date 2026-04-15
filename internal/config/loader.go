@@ -66,6 +66,10 @@ func LoadDatabaseConfig(db *sqlx.DB) (*DatabaseConfig, error) {
 			dbConfig.RedisCacheExpire = expire
 		}
 	}
+	// 网关API根路由
+	if val, ok := configMap["gateway.api-root"]; ok {
+		dbConfig.ApiRoot = val
+	}
 	// 认证配置
 	authConfig := AuthConfig{}
 	// 加密密钥
@@ -121,5 +125,9 @@ func LoadDatabaseConfig(db *sqlx.DB) (*DatabaseConfig, error) {
 // MergeConfig 合并配置
 func MergeConfig(base *Config, dbConfig *DatabaseConfig) *Config {
 	base.DatabaseConfig = *dbConfig
+	// 如果数据库中有ApiRoot配置，则覆盖基础配置
+	if dbConfig.ApiRoot != "" {
+		base.Gateway.ApiRoot = dbConfig.ApiRoot
+	}
 	return base
 }

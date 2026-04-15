@@ -17,26 +17,26 @@ func HeaderParser() Middleware {
 			authHeader := r.Header.Get("Authorization")
 			if !strings.HasPrefix(authHeader, "Bearer ") {
 				logger.WithRequestLogCtx(ctx).Warn("头解析插件: Authorization header中缺少SecretID")
-				utils.BadRequest(w, "Authorization")
+				utils.BadRequest(w, "empty Authorization")
 				return
 			}
 			secretID := strings.TrimPrefix(authHeader, "Bearer ")
 			timestamp := r.Header.Get("X-Timestamp")
 			if timestamp == "" {
 				logger.WithRequestLogCtx(ctx).Warn("头解析插件: X-Timestamp header中缺少时间戳")
-				utils.BadRequest(w, "X-Timestamp")
+				utils.BadRequest(w, "empty X-Timestamp")
 				return
 			}
 			nonce := r.Header.Get("X-Nonce")
 			if nonce == "" {
 				logger.WithRequestLogCtx(ctx).Warn("头解析插件: X-Nonce header中缺少Nonce值")
-				utils.BadRequest(w, "X-Nonce")
+				utils.BadRequest(w, "empty X-Nonce")
 				return
 			}
 			signature := r.Header.Get("X-Signature")
 			if signature == "" {
 				logger.WithRequestLogCtx(ctx).Warn("头解析插件: X-Signature header中缺少签名")
-				utils.BadRequest(w, "X-Signature")
+				utils.BadRequest(w, "empty X-Signature")
 				return
 			}
 			authRequirement := &models.AuthRequirement{

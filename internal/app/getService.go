@@ -115,15 +115,21 @@ func (app *App) ClearServiceCache(serviceID int64) error {
 
 // ClearAllServiceCache 清除所有服务缓存
 func (app *App) ClearAllServiceCache() error {
-	// 从数据库获取所有服务ID
-	services, err := app.DB.GetAllServices()
+	cfg := config.Get()
+	pattern := cfg.Redis.ProjectPrefix + ":service:*"
+	// 通过前缀获取所有服务缓存键
+	keys, err := app.Redis.GetKeysByPattern(pattern)
 	if err != nil {
 		return err
 	}
 	// 清除每个服务的缓存
-	for _, service := range services {
-		if err := app.ClearServiceCache(service.ID); err != nil {
-			logger.Log.Error("清除服务缓存失败", zap.Int64("serviceID", service.ID), zap.Error(err))
+	for _, key := range keys {
+		app.LocalCache.Delete(key)
+		if err := app.Redis.Del(key); err != nil {
+			logger.Log.Error("清除服务缓存失败",
+				zap.String("key", key),
+				zap.Error(err),
+			)
 		}
 	}
 	return nil

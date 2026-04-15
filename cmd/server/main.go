@@ -44,25 +44,53 @@ func main() {
 	// 合并配置到内存
 	mergedCfg := config.MergeConfig(cfg, dbConfig)
 	config.Set(mergedCfg)
+
 	// 初始化路由
-	core := gateway.Handler(appEngine)
-	handler := middleware.Chain(
-		core,
-		middleware.Recovery(),
-		middleware.TraceID(),
-		middleware.HealthCheck(),
-		middleware.GetRealIP(appEngine),
-		middleware.Router(appEngine),
-		middleware.LoadBalancer(),
-		middleware.GetUserAgent(),
-		middleware.Logging(),
-	)
+	proxy(appEngine)
+	// 初始化API
+	apiRoot := cfg.Gateway.ApiRoot
+	if apiRoot == "" {
+		apiRoot = "/_gateway/api"
+	}
+	api(appEngine, apiRoot)
 
 	logger.Log.Info("监听端口: ", zap.String("port", strconv.Itoa(cfg.Gateway.Port)))
-	http.Handle("/", handler)
+	logger.Log.Info("网关API根路由: ", zap.String("api-root", apiRoot))
 	err = http.ListenAndServe(":"+strconv.Itoa(cfg.Gateway.Port), nil)
 	if err != nil {
 		logger.Log.Error("API网关启动失败", zap.Error(err))
 		return
 	}
+}
+
+// proxy 初始化代理
+func proxy(app *app.App) {
+	core := gateway.Handler(app)
+	proxyHandler := middleware.Chain(
+		core,
+		middleware.Recovery(),
+		middleware.TraceID(),
+		middleware.HealthCheck(),
+		middleware.GetRealIP(app),
+		middleware.Router(app),
+		middleware.LoadBalancer(),
+		middleware.GetUserAgent(),
+		middleware.Logging(),
+	)
+	http.Handle("/", proxyHandler)
+}
+
+// api 初始化API
+func api(app *app.App, apiRoot string) {
+	apiHandler := gateway.APIHandler(app)
+	apiMiddleware := middleware.Chain(
+		apiHandler,
+		middleware.Recovery(),
+		middleware.TraceID(),
+		middleware.HealthCheck(),
+		middleware.GetRealIP(app),
+		middleware.GetUserAgent(),
+		middleware.Logging(),
+	)
+	http.Handle(apiRoot+"/", http.StripPrefix(apiRoot, apiMiddleware))
 }
