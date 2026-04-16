@@ -75,6 +75,7 @@ func proxy(app *app.App) {
 		middleware.Router(app),
 		middleware.LoadBalancer(),
 		middleware.GetUserAgent(),
+		middleware.RateLimit(app),
 		middleware.Logging(),
 	)
 	http.Handle("/", proxyHandler)
@@ -90,6 +91,7 @@ func api(app *app.App, apiRoot string) {
 		middleware.HealthCheck(),
 		middleware.GetRealIP(app),
 		middleware.GetUserAgent(),
+		middleware.RateLimit(app),
 		middleware.Logging(),
 	)
 	http.Handle(apiRoot+"/", http.StripPrefix(apiRoot, apiMiddleware))

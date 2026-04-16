@@ -54,9 +54,6 @@ func Build(route *models.Route, app *app.App) []middleware.Middleware {
 			middleware.Authorizer(),
 		)
 	}
-	if route.RequireLimit {
-		mws = append(mws, middleware.RateLimit(app))
-	}
 	if route.IpLimit {
 		mws = append(mws, middleware.IPLimit())
 	}

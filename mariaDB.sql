@@ -133,7 +133,6 @@ CREATE TABLE routes
 	method        ENUM ('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH') NOT NULL COMMENT '路由方法',
 	service_id    BIGINT                                                            NOT NULL COMMENT '服务 ID',
 	require_auth  BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要认证',
-	require_limit BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要限流',
 	ip_limit      BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要 IP 限流',
 	country_limit BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要国家限流',
 	qps           INT                                                                        DEFAULT 0 COMMENT '请求每秒限制',

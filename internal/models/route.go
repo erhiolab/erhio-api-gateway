@@ -8,7 +8,6 @@ type Route struct {
 	ServiceID    int64  `db:"service_id"`
 	ServiceName  string `db:"service_name"`
 	RequireAuth  bool   `db:"require_auth"`
-	RequireLimit bool   `db:"require_limit"`
 	QPS          int64  `db:"qps"`
 	QPM          int64  `db:"qpm"`
 	Enabled      bool   `db:"enabled"`

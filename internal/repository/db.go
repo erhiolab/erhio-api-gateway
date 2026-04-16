@@ -85,7 +85,7 @@ func (db *DBManager) GetRouteByID(routeID int64) (*models.Route, bool, error) {
 	defer cancel()
 
 	var route models.Route
-	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.require_limit, r.ip_limit, r.country_limit, r.qps, r.qpm, r.enabled
+	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.ip_limit, r.country_limit, r.qps, r.qpm, r.enabled
               FROM routes r 
               JOIN services s ON r.service_id = s.id
               WHERE r.id = ?`
@@ -167,7 +167,7 @@ func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
 	defer cancel()
 	// 获取所有路由
 	var dbRoutes []models.Route
-	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.require_limit, r.ip_limit, r.country_limit, r.qps, r.qpm, r.enabled
+	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.ip_limit, r.country_limit, r.qps, r.qpm, r.enabled
               FROM routes r 
               JOIN services s ON r.service_id = s.id`
 	err := db.db.SelectContext(ctx, &dbRoutes, query)
@@ -183,7 +183,6 @@ func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
 			ServiceID:    dbRoute.ServiceID,
 			ServiceName:  dbRoute.ServiceName,
 			RequireAuth:  dbRoute.RequireAuth,
-			RequireLimit: dbRoute.RequireLimit,
 			IpLimit:      dbRoute.IpLimit,
 			CountryLimit: dbRoute.CountryLimit,
 			QPS:          dbRoute.QPS,
