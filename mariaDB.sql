@@ -17,6 +17,38 @@ CREATE TABLE api_gateway_config
 );
 
 -- ----------------------------
+-- 用户表 (users)
+-- ----------------------------
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users`
+(
+	id                BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户 ID',
+	email             VARCHAR(100) NOT NULL UNIQUE COMMENT '登录邮箱(主登录方式)',
+	username          VARCHAR(32)  NOT NULL COMMENT '用户名(英文/下划线)',
+	limit_service_num INT(11)      NOT NULL DEFAULT 5 COMMENT '该用户允许创建的服务最大数量配额',
+	banned            TINYINT      NOT NULL DEFAULT 0 COMMENT '封禁状态: 0-正常, 1-永久封禁, 2-临时封禁, 3-注销中',
+	banned_start      TIMESTAMP    NULL     DEFAULT NULL COMMENT '封禁开始时间',
+	banned_end        TIMESTAMP    NULL     DEFAULT NULL COMMENT '封禁结束时间',
+	created_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	updated_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+);
+
+-- ----------------------------
+-- 登录记录表 (user_login_records)
+-- ----------------------------
+DROP TABLE IF EXISTS `user_login_records`;
+CREATE TABLE `user_login_records`
+(
+	id         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '登录记录 ID',
+	user_id    BIGINT       NOT NULL COMMENT '用户ID',
+	ip         VARCHAR(45)  NOT NULL COMMENT '登录IP地址',
+	region     VARCHAR(255) NULL     DEFAULT NULL COMMENT '登录地区',
+	device     VARCHAR(255) NULL     DEFAULT NULL COMMENT '登录设备',
+	created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
+	FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- ----------------------------
 -- API 密钥表 (api_keys)
 -- ----------------------------
 DROP TABLE IF EXISTS `api_keys`;
@@ -40,6 +72,7 @@ CREATE TABLE api_keys
 	expires_at          TIMESTAMP    NULL COMMENT '过期时间',
 	created_at          TIMESTAMP             DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	updated_at          TIMESTAMP             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+	FOREIGN KEY (user_id) REFERENCES users (id),
 	FOREIGN KEY (service_id) REFERENCES services (id)
 );
 
@@ -102,7 +135,7 @@ CREATE TABLE routes
 	require_auth  BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要认证',
 	require_limit BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要限流',
 	ip_limit      BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要 IP 限流',
-	country_limit BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要国家 限流',
+	country_limit BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要国家限流',
 	qps           INT                                                                        DEFAULT 0 COMMENT '请求每秒限制',
 	qpm           INT                                                                        DEFAULT 0 COMMENT '请求每分钟限制',
 	enabled       TINYINT                                                                    DEFAULT 1 COMMENT '是否启用: 0关闭, 1开启',
