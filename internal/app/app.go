@@ -4,6 +4,7 @@ import (
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/repository"
+	"elake-api-gateway/internal/service/concurrencyLimiter"
 	"elake-api-gateway/internal/storage"
 	"time"
 
@@ -20,12 +21,16 @@ func New() *App {
 	localCache := storage.NewLocalCache(time.Minute)
 	// 初始化 IPDB
 	ipdb := repository.NewIPDBManager(storage.InitIPDB())
+	// 初始化并发限制器
+	concurrencyLimiter.Init()
+	limiter := concurrencyLimiter.Get()
 
 	return &App{
-		DB:         dbClient,
-		Redis:      redisClient,
-		LocalCache: localCache,
-		IPDB:       ipdb,
+		DB:                 dbClient,
+		Redis:              redisClient,
+		LocalCache:         localCache,
+		IPDB:               ipdb,
+		ConcurrencyLimiter: limiter,
 	}
 }
 

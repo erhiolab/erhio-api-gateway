@@ -116,7 +116,7 @@ func (db *DBManager) GetServiceWithNodes(serviceID int64) (*models.Service, bool
 	}
 	// 获取该服务下所有状态正常且未删除的节点
 	var nodes []models.ServiceNode
-	queryNodes := `SELECT id, service_id, node_url, weight, status 
+	queryNodes := `SELECT id, service_id, node_url, weight, max_conn, status 
                    FROM service_nodes 
                    WHERE service_id = ? AND status = 1 AND is_deleted = FALSE`
 	err = db.db.SelectContext(ctx, &nodes, queryNodes, serviceID)
@@ -143,7 +143,7 @@ func (db *DBManager) GetAllServices() ([]models.Service, error) {
 	for _, dbService := range dbServices {
 		// 获取服务节点
 		var nodes []models.ServiceNode
-		nodeQuery := `SELECT id, service_id, node_url, weight, status
+		nodeQuery := `SELECT id, service_id, node_url, weight, max_conn, status
 					  FROM service_nodes
 					  WHERE service_id = ? AND status = 1 AND is_deleted = FALSE`
 		err := db.db.SelectContext(ctx, &nodes, nodeQuery, dbService.ID)

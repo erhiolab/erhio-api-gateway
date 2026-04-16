@@ -70,6 +70,18 @@ func LoadDatabaseConfig(db *sqlx.DB) (*DatabaseConfig, error) {
 	if val, ok := configMap["gateway.api-root"]; ok {
 		dbConfig.ApiRoot = val
 	}
+	// 节点超时时间
+	if val, ok := configMap["gateway.node-timeout"]; ok {
+		if timeout, err := strconv.Atoi(val); err == nil {
+			dbConfig.NodeTimeout = timeout
+		}
+	}
+	// 总超时时间
+	if val, ok := configMap["gateway.total-timeout"]; ok {
+		if timeout, err := strconv.Atoi(val); err == nil {
+			dbConfig.TotalTimeout = timeout
+		}
+	}
 	// 认证配置
 	authConfig := AuthConfig{}
 	// 加密密钥
@@ -125,9 +137,5 @@ func LoadDatabaseConfig(db *sqlx.DB) (*DatabaseConfig, error) {
 // MergeConfig 合并配置
 func MergeConfig(base *Config, dbConfig *DatabaseConfig) *Config {
 	base.DatabaseConfig = *dbConfig
-	// 如果数据库中有ApiRoot配置，则覆盖基础配置
-	if dbConfig.ApiRoot != "" {
-		base.Gateway.ApiRoot = dbConfig.ApiRoot
-	}
 	return base
 }

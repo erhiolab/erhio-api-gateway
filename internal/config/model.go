@@ -2,10 +2,11 @@ package config
 
 // GatewayConfig 网关配置
 type GatewayConfig struct {
-	Port     int    `yaml:"port"`
-	DataPath string `yaml:"data-path"`
-	TempPath string `yaml:"temp-path"`
-	ApiRoot  string `yaml:"api-root"`
+	Port                 int    `yaml:"port"`
+	DataPath             string `yaml:"data-path"`
+	TempPath             string `yaml:"temp-path"`
+	MaxConcurrencyPerCPU int    `yaml:"max-concurrency-per-cpu"`
+	RecalculateInterval  int    `yaml:"recalculate-interval"`
 }
 
 // LoggerConfig 日志配置

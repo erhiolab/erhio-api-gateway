@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"bytes"
+	"context"
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/models"
@@ -40,9 +41,32 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 		utils.BadGateway(w)
 		return
 	}
+	cfg := config.Get()
+	// 节点超时时间
+	nodeTimeout := 3 * time.Second
+	if cfg.DatabaseConfig.NodeTimeout > 0 {
+		nodeTimeout = time.Duration(cfg.DatabaseConfig.NodeTimeout) * time.Second
+	}
+	// 总超时时间
+	maxTotalTimeout := 10 * time.Second
+	if cfg.DatabaseConfig.TotalTimeout > 0 {
+		maxTotalTimeout = time.Duration(cfg.DatabaseConfig.TotalTimeout) * time.Second
+	}
+	startTime := time.Now()
 	tried := make(map[int64]struct{}, len(service.Nodes))
 	current := selected.Node
 	for current != nil {
+		if time.Since(startTime) > maxTotalTimeout {
+			logger.WithRequestLogCtx(r.Context()).Warn("代理请求: 总超时限制, 停止尝试更多节点",
+				zap.Int64("service_id", service.ID),
+				zap.String("service_name", service.Name),
+				zap.Duration("elapsed", time.Since(startTime)),
+				zap.Duration("max_timeout", maxTotalTimeout),
+				zap.Int("tried_nodes", len(tried)),
+			)
+			utils.BadGateway(w)
+			return
+		}
 		tried[current.ID] = struct{}{}
 		selected.Node = current
 		if err := resetBody(); err != nil {
@@ -54,13 +78,19 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 			utils.BadGateway(w)
 			return
 		}
-		proxyErr, retryable := proxyToNode(current.NodeURL, w, r)
+		nodeCtx, nodeCancel := context.WithTimeout(r.Context(), nodeTimeout)
+		proxyErr, retryable := proxyToNode(current.NodeURL, w, r.WithContext(nodeCtx))
+		nodeCancel()
 		loadBalancer.ReleaseNodeRequest(service.ID, current.ID)
 		if proxyErr == nil {
 			loadBalancer.MarkNodeSuccess(service.ID, current.ID)
 			return
 		}
-		loadBalancer.MarkNodeFailure(service.ID, current.ID, proxyErr)
+		if isContextTimeout(proxyErr) {
+			loadBalancer.MarkNodeMaxConn(service.ID, current.ID)
+		} else {
+			loadBalancer.MarkNodeFailure(service.ID, current.ID, proxyErr)
+		}
 		next := loadBalancer.SelectNode(service, tried)
 		if !retryable || next == nil {
 			logger.WithRequestLogCtx(r.Context()).Warn("代理请求: 上游节点不可用",
@@ -126,6 +156,15 @@ func proxyToNode(target string, w http.ResponseWriter, r *http.Request) (error, 
 		return proxyErr, !retryWriter.wrote
 	}
 	return nil, false
+}
+
+// isContextTimeout 是否上下文超时
+func isContextTimeout(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "context deadline exceeded") ||
+		strings.Contains(err.Error(), "context canceled")
 }
 
 // singleJoiningSlash 合并路径, 确保只有一个斜杠

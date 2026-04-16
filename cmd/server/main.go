@@ -48,7 +48,7 @@ func main() {
 	// 初始化路由
 	proxy(appEngine)
 	// 初始化API
-	apiRoot := cfg.Gateway.ApiRoot
+	apiRoot := cfg.DatabaseConfig.ApiRoot
 	if apiRoot == "" {
 		apiRoot = "/_gateway/api"
 	}
@@ -71,6 +71,7 @@ func proxy(app *app.App) {
 		middleware.Recovery(),
 		middleware.TraceID(),
 		middleware.HealthCheck(),
+		middleware.ConcurrencyLimit(app),
 		middleware.GetRealIP(app),
 		middleware.Router(app),
 		middleware.LoadBalancer(),
@@ -89,6 +90,7 @@ func api(app *app.App, apiRoot string) {
 		middleware.Recovery(),
 		middleware.TraceID(),
 		middleware.HealthCheck(),
+		middleware.ConcurrencyLimit(app),
 		middleware.GetRealIP(app),
 		middleware.GetUserAgent(),
 		middleware.RateLimit(app),

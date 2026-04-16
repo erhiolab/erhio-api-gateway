@@ -6,6 +6,10 @@ gateway:
     data-path: "data"
     # 临时路径
     temp-path: "tmp"
+    # 每个CPU核心的并发上限
+    max-concurrency-per-cpu: 100
+    # 重新计算并发上限的间隔(秒)
+    recalculate-interval: 10
 
 # 日志配置
 logger:

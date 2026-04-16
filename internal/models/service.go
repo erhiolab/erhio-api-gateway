@@ -14,6 +14,7 @@ type ServiceNode struct {
 	ServiceID int64  `db:"service_id"`
 	NodeURL   string `db:"node_url"`
 	Weight    int    `db:"weight"`
+	MaxConn   int    `db:"max_conn"`
 	Status    int    `db:"status"`
 }
 

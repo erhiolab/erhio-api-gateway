@@ -115,6 +115,7 @@ CREATE TABLE service_nodes
 	service_id BIGINT       NOT NULL COMMENT '服务 ID',
 	node_url   VARCHAR(255) NOT NULL COMMENT '服务节点 URL',
 	weight     INT       DEFAULT 1 COMMENT '负载均衡权重',
+	max_conn   INT       DEFAULT 100 COMMENT '最大连接数',
 	status     TINYINT   DEFAULT 1 COMMENT '节点状态: 0不可用, 1可用',
 	is_deleted BOOLEAN   DEFAULT FALSE COMMENT '软删除标记',
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

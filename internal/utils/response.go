@@ -81,3 +81,8 @@ func InternalServerError(w http.ResponseWriter) {
 func BadGateway(w http.ResponseWriter) {
 	Error(w, http.StatusBadGateway, 5020, "bad gateway")
 }
+
+// ServerBusy 服务器匆忙
+func ServerBusy(w http.ResponseWriter) {
+	Error(w, http.StatusServiceUnavailable, 5030, "server busy")
+}
