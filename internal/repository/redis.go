@@ -148,3 +148,28 @@ func (r *RedisManager) Close() error {
 	}
 	return nil
 }
+
+// Publish 发布消息到指定频道
+func (r *RedisManager) Publish(channel string, message any) error {
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Redis.WriteTimeout)*time.Second)
+	defer cancel()
+	var data any
+	switch v := message.(type) {
+	case string, int, int64, float64, bool:
+		data = v
+	default:
+		// 结构体或 Map 自动转为 JSON
+		b, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		data = string(b)
+	}
+	return r.client.Publish(ctx, channel, data).Err()
+}
+
+// Subscribe 订阅指定频道
+func (r *RedisManager) Subscribe(channels ...string) *redis.PubSub {
+	return r.client.Subscribe(context.Background(), channels...)
+}

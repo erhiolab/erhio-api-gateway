@@ -28,7 +28,7 @@ logger:
     # 是否压缩日志文件
     compress: true
 
-
+# 健康检查配置
 health:
     # 数据库健康检查间隔(秒)
     db-health-check-interval: 10

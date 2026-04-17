@@ -6,6 +6,7 @@ import (
 	"elake-api-gateway/internal/gateway"
 	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/middleware"
+	"elake-api-gateway/internal/service/pubSub"
 	"elake-api-gateway/internal/utils"
 	"net/http"
 	"strconv"
@@ -34,6 +35,12 @@ func main() {
 	// 创建应用实例
 	appEngine := app.New()
 	defer appEngine.Close()
+
+	// 启动消息订阅
+	go func() {
+		logger.Log.Info("消息处理器: 启动消息订阅", zap.String("channel", cfg.Redis.ProjectPrefix))
+		pubSub.StartSubscription(appEngine, cfg.Redis.ProjectPrefix)
+	}()
 
 	// 从数据库加载配置
 	dbConfig, err := appEngine.LoadConfigFromDB()
@@ -93,7 +100,6 @@ func api(app *app.App, apiRoot string) {
 		middleware.ConcurrencyLimit(app),
 		middleware.GetRealIP(app),
 		middleware.GetUserAgent(),
-		middleware.RateLimit(app),
 		middleware.Logging(),
 	)
 	http.Handle(apiRoot+"/", http.StripPrefix(apiRoot, apiMiddleware))

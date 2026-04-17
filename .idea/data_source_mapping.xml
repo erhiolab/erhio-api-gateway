@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="DataSourcePerFileMappings">
-    <file url="file://$PROJECT_DIR$/add_config_items.sql" value="61358834-736f-4b7c-bf48-48c69474ff21" />
-    <file url="file://$PROJECT_DIR$/mariaDB.sql" value="61358834-736f-4b7c-bf48-48c69474ff21" />
-  </component>
-</project>
