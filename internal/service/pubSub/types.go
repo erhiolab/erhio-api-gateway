@@ -4,6 +4,8 @@ package pubSub
 type MessageType string
 
 const (
+	// MessageTypeTriggerIPDBUpdate 触发IPDB自动更新
+	MessageTypeTriggerIPDBUpdate MessageType = "trigger_ipdb_update"
 	// MessageTypeClearApiKeyCache 清除API密钥缓存
 	MessageTypeClearApiKeyCache MessageType = "clear_api_key_cache"
 	// MessageTypeClearServiceCache 清除服务缓存

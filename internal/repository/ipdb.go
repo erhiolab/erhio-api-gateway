@@ -134,6 +134,11 @@ func (ipdb *IPDBManager) GetAll(ip string) (*models.IPLocation, error) {
 	return location, nil
 }
 
+// TriggerIPDBUpdate 触发 IPDB 更新
+func (ipdb *IPDBManager) TriggerIPDBUpdate() error {
+	return storage.UpdateIPDB(ipdb.ipdb)
+}
+
 // Close 关闭数据库连接
 func (ipdb *IPDBManager) Close() {
 	ipdb.ipdb.Get().Close()

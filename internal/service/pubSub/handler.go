@@ -26,6 +26,8 @@ func (h *MessageHandler) HandleMessage(message string) {
 		return
 	}
 	switch msg.Type {
+	case MessageTypeTriggerIPDBUpdate:
+		h.handleTriggerIPDBUpdate()
 	case MessageTypeClearApiKeyCache:
 		h.handleClearApiKeyCache(msg)
 	case MessageTypeClearServiceCache:
@@ -34,6 +36,14 @@ func (h *MessageHandler) HandleMessage(message string) {
 		h.handleClearRouteCache(msg)
 	default:
 		logger.Log.Warn("消息处理器: 未知消息类型", zap.String("type", string(msg.Type)))
+	}
+}
+
+// handleTriggerIPDBUpdate 处理触发IPDB更新消息
+func (h *MessageHandler) handleTriggerIPDBUpdate() {
+	err := h.app.IPDB.TriggerIPDBUpdate()
+	if err != nil {
+		logger.Log.Error("消息处理器: 触发IPDB更新失败", zap.Error(err))
 	}
 }
 

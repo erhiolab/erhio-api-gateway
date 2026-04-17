@@ -57,9 +57,6 @@ func PublishMessage(app *app.App) http.HandlerFunc {
 			utils.InternalServerError(w)
 			return
 		}
-		logger.WithRequestLogCtx(ctx).Info("发布消息成功",
-			zap.String("type", req.Type),
-		)
 		utils.Success(w, "success")
 	}
 }

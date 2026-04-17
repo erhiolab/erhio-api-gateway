@@ -52,7 +52,7 @@ func (w *IPDB) Get() *ip2location.DB {
 func InitIPDB() *IPDB {
 	cfg := config.Get()
 	dataPath := cfg.Gateway.DataPath
-	latest, err := FindLatestFile(dataPath)
+	latest, err := FindLatestIPDBFile(dataPath)
 	if err != nil {
 		logger.Log.Error("扫描 IPDB 目录失败", zap.Error(err))
 		return nil
@@ -60,7 +60,7 @@ func InitIPDB() *IPDB {
 	// 如果没有文件, 首次下载
 	if latest == "" {
 		logger.Log.Info("IPDB 不存在")
-		newFile, err := DownloadNewVersion()
+		newFile, err := DownloadNewIPDBVersion()
 		if err != nil {
 			logger.Log.Error("下载失败", zap.Error(err))
 			return nil
@@ -79,10 +79,10 @@ func InitIPDB() *IPDB {
 	}
 	// 测试用
 	//logger.Log.Info("触发 IPDB 自动更新")
-	//if err := Update(wrapper); err != nil {
+	//if err := UpdateIPDB(wrapper); err != nil {
 	//	logger.Log.Error("更新失败", zap.Error(err))
 	//}
-	go StartUpdateTask(wrapper)
+	go StartIPDBUpdateTask(wrapper)
 	healthManager.Global().Register(
 		"IPDB",
 		cfg.Health.IPDBHealthCheckFailThreshold,
@@ -104,8 +104,8 @@ func InitIPDB() *IPDB {
 	return wrapper
 }
 
-// FindLatestFile 查找目录中最新的 IPDB 文件
-func FindLatestFile(dir string) (string, error) {
+// FindLatestIPDBFile 查找目录中最新的 IPDB 文件
+func FindLatestIPDBFile(dir string) (string, error) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return "", err
@@ -125,10 +125,10 @@ func FindLatestFile(dir string) (string, error) {
 	return filepath.Join(dir, list[len(list)-1]), nil
 }
 
-// StartUpdateTask 启动 IPDB 更新任务
-func StartUpdateTask(wrapper *IPDB) {
+// StartIPDBUpdateTask 启动 IPDB 更新任务
+func StartIPDBUpdateTask(wrapper *IPDB) {
 	// 启动时先清理一次临时文件
-	go CleanupTempFiles()
+	go CleanupIPDBTempFiles()
 	for {
 		now := time.Now()
 		next := time.Date(now.Year(), now.Month(), now.Day(), 3, 0, 0, 0, now.Location())
@@ -137,24 +137,24 @@ func StartUpdateTask(wrapper *IPDB) {
 		}
 		time.Sleep(time.Until(next))
 		// 每天清理一次临时文件
-		go CleanupTempFiles()
-		if ShouldUpdate(wrapper.GetFilePath()) {
+		go CleanupIPDBTempFiles()
+		if ShouldIPDBUpdate(wrapper.GetIPDBFilePath()) {
 			logger.Log.Info("触发 IPDB 自动更新")
-			if err := Update(wrapper); err != nil {
+			if err := UpdateIPDB(wrapper); err != nil {
 				logger.Log.Error("更新失败", zap.Error(err))
 			}
 			// 更新完成后清理临时文件
-			go CleanupTempFiles()
+			go CleanupIPDBTempFiles()
 		}
 	}
 }
 
-// CleanupTempFiles 清理 IPDB 产生的临时文件
-func CleanupTempFiles() {
+// CleanupIPDBTempFiles 清理 IPDB 产生的临时文件
+func CleanupIPDBTempFiles() {
 	// 清理临时目录中的 IPDB 临时文件
 	cfg := config.Get()
 	tempPath := cfg.Gateway.TempPath
-	if err := CleanupFilesInDir(tempPath, func(name string) bool {
+	if err := CleanupIPDBFilesInDir(tempPath, func(name string) bool {
 		// 清理 IPDB_ 开头的zip文件和 IPDB -开头的bin文件
 		return strings.HasPrefix(name, filePrefix) && strings.HasSuffix(name, ".zip") ||
 			strings.HasPrefix(name, filePrefix) && strings.HasSuffix(name, fileSuffix)
@@ -168,8 +168,8 @@ func CleanupTempFiles() {
 	}
 }
 
-// CleanupFilesInDir 清理目录中符合条件的文件
-func CleanupFilesInDir(dir string, filter func(string) bool) error {
+// CleanupIPDBFilesInDir 清理目录中符合IPDB条件的文件
+func CleanupIPDBFilesInDir(dir string, filter func(string) bool) error {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return err
@@ -213,15 +213,15 @@ func CleanupOldIPDBFiles(dir string) error {
 	return nil
 }
 
-// GetFilePath 返回当前 IPDB 文件路径
-func (w *IPDB) GetFilePath() string {
+// GetIPDBFilePath 返回当前 IPDB 文件路径
+func (w *IPDB) GetIPDBFilePath() string {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return w.filePath
 }
 
-// ExtractYearMonth 从文件名提取年月
-func ExtractYearMonth(filePath string) (string, error) {
+// ExtractIPDBYearMonth 从文件名提取年月
+func ExtractIPDBYearMonth(filePath string) (string, error) {
 	base := filepath.Base(filePath)
 	base = strings.TrimSuffix(base, fileSuffix)
 	base = strings.TrimPrefix(base, filePrefix)
@@ -240,14 +240,14 @@ func ExtractYearMonth(filePath string) (string, error) {
 	return datePart[:6], nil
 }
 
-// ShouldUpdate 判断是否需要更新
-func ShouldUpdate(currentFile string) bool {
+// ShouldIPDBUpdate 判断是否需要更新
+func ShouldIPDBUpdate(currentFile string) bool {
 	now := time.Now()
 	// 只在每月 3, 4, 5 号尝试, 错过这几天就不搜了, 避免每天轮询
 	if now.Day() < 3 || now.Day() > 5 {
 		return false
 	}
-	currentYM, err := ExtractYearMonth(currentFile)
+	currentYM, err := ExtractIPDBYearMonth(currentFile)
 	nowYM := now.Format("200601")
 	if err == nil && currentYM == nowYM {
 		return false
@@ -263,9 +263,9 @@ func ShouldUpdate(currentFile string) bool {
 	return true
 }
 
-// Update 更新 IPDB
-func Update(wrapper *IPDB) error {
-	newFile, err := DownloadNewVersion()
+// UpdateIPDB 更新 IPDB
+func UpdateIPDB(wrapper *IPDB) error {
+	newFile, err := DownloadNewIPDBVersion()
 	if err != nil {
 		return err
 	}
@@ -292,8 +292,8 @@ func Update(wrapper *IPDB) error {
 	return nil
 }
 
-// DownloadNewVersion 下载新版本
-func DownloadNewVersion() (string, error) {
+// DownloadNewIPDBVersion 下载新版本
+func DownloadNewIPDBVersion() (string, error) {
 	cfg := config.Get().IPDB
 	for i := 1; i <= cfg.MaxDownloadAttempts; i++ {
 		if i > 1 {
@@ -301,15 +301,15 @@ func DownloadNewVersion() (string, error) {
 			logger.Log.Info(fmt.Sprintf("%v 秒后, 第 %d 次尝试重新下载 IPDB", retryTime, i))
 			time.Sleep(retryTime)
 		}
-		if !AllowDownloadToday() {
+		if !IPDBAllowDownloadToday() {
 			return "", fmt.Errorf("今日下载次数已用尽")
 		}
-		fileName, err := DownloadAndVerifyOnce()
+		fileName, err := DownloadAndVerifyOnceIPDB()
 		if err == nil {
 			return fileName, nil
 		}
 		// 检查是否是DNS相关错误
-		if IsDNSError(err) {
+		if IsIPDBDNSError(err) {
 			wait := time.Duration(i*i*5) * time.Second
 			logger.Log.Warn("DNS 解析失败, 准备重试",
 				zap.Int("attempt", i),
@@ -328,8 +328,8 @@ func DownloadNewVersion() (string, error) {
 	return "", fmt.Errorf("超过最大下载次数 %d 次", cfg.MaxDownloadAttempts)
 }
 
-// AllowDownloadToday 检查今日是否已下载超过最大次数
-func AllowDownloadToday() bool {
+// IPDBAllowDownloadToday 检查今日是否已下载超过最大次数
+func IPDBAllowDownloadToday() bool {
 	cfg := config.Get().IPDB
 	today := time.Now().Format("20060102")
 	downloadCounter.mu.Lock()
@@ -345,8 +345,8 @@ func AllowDownloadToday() bool {
 	return true
 }
 
-// DownloadAndVerifyOnce 下载并校验一次
-func DownloadAndVerifyOnce() (string, error) {
+// DownloadAndVerifyOnceIPDB 下载并校验一次
+func DownloadAndVerifyOnceIPDB() (string, error) {
 	cfg := config.Get()
 	tempPath := cfg.Gateway.TempPath
 	dataPath := cfg.Gateway.DataPath
@@ -363,16 +363,16 @@ func DownloadAndVerifyOnce() (string, error) {
 		"DB11LITEBINIPV6",
 	)
 	// 下载
-	if err := DownloadFile(url, tempZip); err != nil {
+	if err := DownloadIPDBFile(url, tempZip); err != nil {
 		return "", err
 	}
 	// zip 校验
-	if err := ValidateZip(tempZip); err != nil {
+	if err := ValidateIPDBZip(tempZip); err != nil {
 		_ = os.Remove(tempZip)
 		return "", err
 	}
 	// zip 解压
-	if err := UnzipAndExtractBIN(tempZip, tempBin); err != nil {
+	if err := IPDBUnzipAndExtractBIN(tempZip, tempBin); err != nil {
 		_ = os.Remove(tempZip)
 		return "", err
 	}
@@ -412,8 +412,8 @@ func DownloadAndVerifyOnce() (string, error) {
 	return fileName, nil
 }
 
-// DownloadFile 下载文件
-func DownloadFile(url, dest string) error {
+// DownloadIPDBFile 下载文件
+func DownloadIPDBFile(url, dest string) error {
 	// 创建客户端
 	client := grab.NewClient()
 	client.HTTPClient = &http.Client{
@@ -450,29 +450,29 @@ func DownloadFile(url, dest string) error {
 		return err
 	}
 	// 检查下载的文件是否是HTML错误页面
-	if isHTML, err := IsDownloadLimitError(dest); err != nil {
+	if isHTML, err := IsIPDBDownloadLimitError(dest); err != nil {
 		_ = os.Remove(dest)
 		return fmt.Errorf("检查下载文件失败: %v", err)
 	} else if isHTML {
 		_ = os.Remove(dest)
 		// 设置今日下载次数为最大值, 避免重试
-		SetDownloadLimitReached()
+		SetIPDBDownloadLimitReached()
 		return fmt.Errorf("下载次数已达上限, 请24小时后再试")
 	}
 	logger.Log.Info("IPDB 下载完成")
 	return nil
 }
 
-// IsDNSError 检查错误是否是DNS相关错误
-func IsDNSError(err error) bool {
+// IsIPDBDNSError 检查错误是否是DNS相关错误
+func IsIPDBDNSError(err error) bool {
 	if err == nil {
 		return false
 	}
 	return strings.Contains(err.Error(), "no such host") || strings.Contains(err.Error(), "Temporary failure in name resolution")
 }
 
-// IsDownloadLimitError 检查下载的文件是否是HTML错误页面(下载次数限制)
-func IsDownloadLimitError(path string) (bool, error) {
+// IsIPDBDownloadLimitError 检查下载的文件是否是HTML错误页面(下载次数限制)
+func IsIPDBDownloadLimitError(path string) (bool, error) {
 	// 读取文件前几个字节检查是否是HTML
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -486,8 +486,8 @@ func IsDownloadLimitError(path string) (bool, error) {
 	return false, nil
 }
 
-// SetDownloadLimitReached 设置今日下载次数已达上限
-func SetDownloadLimitReached() {
+// SetIPDBDownloadLimitReached 设置今日下载次数已达上限
+func SetIPDBDownloadLimitReached() {
 	cfg := config.Get().IPDB
 	today := time.Now().Format("20060102")
 	downloadCounter.mu.Lock()
@@ -497,8 +497,8 @@ func SetDownloadLimitReached() {
 	logger.Log.Warn("IPDB 下载次数已达上限, 已设置今日下载次数为最大值")
 }
 
-// ValidateZip 校验 ZIP 文件是否包含指定的 BIN 文件
-func ValidateZip(path string) error {
+// ValidateIPDBZip 校验 ZIP 文件是否包含指定的 BIN 文件
+func ValidateIPDBZip(path string) error {
 	r, err := zip.OpenReader(path)
 	if err != nil {
 		return fmt.Errorf("ZIP 文件损坏: %v", err)
@@ -515,8 +515,8 @@ func ValidateZip(path string) error {
 	return fmt.Errorf("ZIP 内未找到目标 BIN 文件")
 }
 
-// UnzipAndExtractBIN 解压 ZIP 文件并提取指定的 BIN 文件
-func UnzipAndExtractBIN(srcZip, destBin string) error {
+// IPDBUnzipAndExtractBIN 解压 ZIP 文件并提取指定的 BIN 文件
+func IPDBUnzipAndExtractBIN(srcZip, destBin string) error {
 	logger.Log.Info("正在解压 IPDB")
 	r, err := zip.OpenReader(srcZip)
 	if err != nil {
