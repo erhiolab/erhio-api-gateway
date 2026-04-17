@@ -80,9 +80,9 @@ func proxy(app *app.App) {
 		middleware.HealthCheck(),
 		middleware.ConcurrencyLimit(app),
 		middleware.GetRealIP(app),
+		middleware.GetUserAgent(),
 		middleware.Router(app),
 		middleware.LoadBalancer(),
-		middleware.GetUserAgent(),
 		middleware.RateLimit(app),
 		middleware.Logging(),
 	)
