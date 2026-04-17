@@ -2,6 +2,7 @@ package pubSub
 
 import (
 	"elake-api-gateway/internal/app"
+	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
 	"encoding/json"
 
@@ -26,6 +27,8 @@ func (h *MessageHandler) HandleMessage(message string) {
 		return
 	}
 	switch msg.Type {
+	case MessageTypeReloadConfig:
+		h.handleReloadConfig()
 	case MessageTypeTriggerIPDBUpdate:
 		h.handleTriggerIPDBUpdate()
 	case MessageTypeClearApiKeyCache:
@@ -37,6 +40,22 @@ func (h *MessageHandler) HandleMessage(message string) {
 	default:
 		logger.Log.Warn("消息处理器: 未知消息类型", zap.String("type", string(msg.Type)))
 	}
+}
+
+// handleReloadConfig 处理重载数据库配置消息
+func (h *MessageHandler) handleReloadConfig() {
+	logger.Log.Info("消息处理器: 开始重载数据库配置", zap.Any("current_config", config.Get()))
+	// 从数据库加载配置
+	dbConfig, err := h.app.LoadConfigFromDB()
+	if err != nil {
+		logger.Log.Error("消息处理器: 从数据库加载配置失败", zap.Error(err))
+		return
+	}
+	// 合并配置到内存
+	cfg := config.Get()
+	mergedCfg := config.MergeConfig(cfg, dbConfig)
+	config.Set(mergedCfg)
+	logger.Log.Info("消息处理器: 重载数据库配置成功", zap.Any("new_config", mergedCfg))
 }
 
 // handleTriggerIPDBUpdate 处理触发IPDB更新消息

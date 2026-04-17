@@ -4,6 +4,8 @@ package pubSub
 type MessageType string
 
 const (
+	// MessageTypeReloadConfig 重载数据库配置
+	MessageTypeReloadConfig MessageType = "reload_config"
 	// MessageTypeTriggerIPDBUpdate 触发IPDB自动更新
 	MessageTypeTriggerIPDBUpdate MessageType = "trigger_ipdb_update"
 	// MessageTypeClearApiKeyCache 清除API密钥缓存
