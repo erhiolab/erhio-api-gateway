@@ -28,8 +28,7 @@ type CircuitBreaker struct {
 type CircuitBreakerType int
 
 const (
-	CircuitBreakerNone CircuitBreakerType = iota
-	CircuitBreakerError
+	CircuitBreakerError = iota + 1
 	CircuitBreakerMaxConn
 )
 

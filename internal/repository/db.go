@@ -116,7 +116,7 @@ func (db *DBManager) GetServiceWithNodes(serviceID int64) (*models.Service, bool
 	}
 	// 获取该服务下所有状态正常且未删除的节点
 	var nodes []models.ServiceNode
-	queryNodes := `SELECT id, service_id, node_url, weight, max_conn, status 
+	queryNodes := `SELECT id, service_id, node_url, weight, max_conn, status, availability 
                    FROM service_nodes 
                    WHERE service_id = ? AND status = 1 AND is_deleted = FALSE`
 	err = db.db.SelectContext(ctx, &nodes, queryNodes, serviceID)
@@ -143,9 +143,9 @@ func (db *DBManager) GetAllServices() ([]models.Service, error) {
 	for _, dbService := range dbServices {
 		// 获取服务节点
 		var nodes []models.ServiceNode
-		nodeQuery := `SELECT id, service_id, node_url, weight, max_conn, status
-					  FROM service_nodes
-					  WHERE service_id = ? AND status = 1 AND is_deleted = FALSE`
+		nodeQuery := `SELECT id, service_id, node_url, weight, max_conn, status, availability
+				  FROM service_nodes
+				  WHERE service_id = ? AND status = 1 AND is_deleted = FALSE`
 		err := db.db.SelectContext(ctx, &nodes, nodeQuery, dbService.ID)
 		if err != nil {
 			return nil, err
@@ -201,4 +201,40 @@ func (db *DBManager) GetDB() *sqlx.DB {
 // Close 关闭数据库连接
 func (db *DBManager) Close() error {
 	return db.db.Close()
+}
+
+// UpdateNodeAvailability 批量更新节点可用度
+func (db *DBManager) UpdateNodeAvailability(updates []models.NodeAvailabilityUpdate) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.WriteTimeout)*time.Second)
+	defer cancel()
+	// 构建批量更新SQL
+	cases := make([]string, 0, len(updates))
+	ids := make([]int64, 0, len(updates))
+	args := make([]any, 0, len(updates)*2)
+	for _, update := range updates {
+		cases = append(cases, "WHEN ? THEN ?")
+		ids = append(ids, update.NodeID)
+		args = append(args, update.NodeID, update.Availability)
+	}
+	query := `UPDATE service_nodes SET availability = CASE id ` + strings.Join(cases, " ") + ` END WHERE id IN (?` + strings.Repeat(", ?", len(ids)-1) + `)`
+	args = append(args, toAnySlice(ids)...)
+	_, err := db.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		logger.Log.Error("批量更新节点可用度错误", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+// toAnySlice 转换int64切片为any切片
+func toAnySlice(ids []int64) []any {
+	result := make([]any, len(ids))
+	for i, id := range ids {
+		result[i] = id
+	}
+	return result
 }

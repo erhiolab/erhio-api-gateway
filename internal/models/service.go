@@ -10,15 +10,22 @@ type Service struct {
 
 // ServiceNode 服务节点配置
 type ServiceNode struct {
-	ID        int64  `db:"id"`
-	ServiceID int64  `db:"service_id"`
-	NodeURL   string `db:"node_url"`
-	Weight    int    `db:"weight"`
-	MaxConn   int    `db:"max_conn"`
-	Status    int    `db:"status"`
+	ID           int64   `db:"id"`
+	ServiceID    int64   `db:"service_id"`
+	NodeURL      string  `db:"node_url"`
+	Weight       int     `db:"weight"`
+	MaxConn      int     `db:"max_conn"`
+	Status       int     `db:"status"`
+	Availability float64 `db:"availability"`
 }
 
 // SelectedNode 请求当前选中的上游节点
 type SelectedNode struct {
 	Node *ServiceNode
+}
+
+// NodeAvailabilityUpdate 节点可用率更新
+type NodeAvailabilityUpdate struct {
+	NodeID       int64
+	Availability float64
 }

@@ -111,15 +111,16 @@ CREATE TABLE services
 DROP TABLE IF EXISTS `service_nodes`;
 CREATE TABLE service_nodes
 (
-	id         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '服务节点 ID',
-	service_id BIGINT       NOT NULL COMMENT '服务 ID',
-	node_url   VARCHAR(255) NOT NULL COMMENT '服务节点 URL',
-	weight     INT       DEFAULT 1 COMMENT '负载均衡权重',
-	max_conn   INT       DEFAULT 100 COMMENT '最大连接数',
-	status     TINYINT   DEFAULT 1 COMMENT '节点状态: 0不可用, 1可用',
-	is_deleted BOOLEAN   DEFAULT FALSE COMMENT '软删除标记',
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+	id           BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '服务节点 ID',
+	service_id   BIGINT       NOT NULL COMMENT '服务 ID',
+	node_url     VARCHAR(255) NOT NULL COMMENT '服务节点 URL',
+	weight       INT           DEFAULT 1 COMMENT '负载均衡权重',
+	max_conn     INT           DEFAULT 100 COMMENT '最大连接数',
+	status       TINYINT       DEFAULT 1 COMMENT '节点状态: 0不可用, 1可用',
+	availability DECIMAL(5, 2) DEFAULT 100.00 COMMENT '可用度百分比',
+	is_deleted   BOOLEAN       DEFAULT FALSE COMMENT '软删除标记',
+	created_at   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	updated_at   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 	FOREIGN KEY (service_id) REFERENCES services (id)
 );
 
