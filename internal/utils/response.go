@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// JSONResponse 统一的JSON响应
-func JSONResponse(w http.ResponseWriter, status int, data any) {
+// jsonResponse 统一的JSON响应
+func jsonResponse(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	err := json.NewEncoder(w).Encode(data)
@@ -18,7 +18,7 @@ func JSONResponse(w http.ResponseWriter, status int, data any) {
 
 // Success 成功响应
 func Success(w http.ResponseWriter, data any) {
-	JSONResponse(w, http.StatusOK, map[string]any{
+	jsonResponse(w, http.StatusOK, map[string]any{
 		"code":      2000,
 		"data":      data,
 		"timestamp": time.Now().UnixMilli(),
@@ -27,7 +27,7 @@ func Success(w http.ResponseWriter, data any) {
 
 // Error 错误响应
 func Error(w http.ResponseWriter, status, errorCode int, message string) {
-	JSONResponse(w, status, map[string]any{
+	jsonResponse(w, status, map[string]any{
 		"code":      errorCode,
 		"error":     message,
 		"timestamp": time.Now().UnixMilli(),

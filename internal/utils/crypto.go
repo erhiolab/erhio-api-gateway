@@ -19,12 +19,12 @@ import (
 // GenerateCredentials 生成认证凭证
 func GenerateCredentials() (string, string, string, error) {
 	// 生成密钥 ID
-	secretID, err := GenerateToken(8)
+	secretID, err := generateToken(8)
 	if err != nil {
 		return "", "", "", err
 	}
 	// 生成密钥
-	secretKey, err := GenerateToken(32)
+	secretKey, err := generateToken(32)
 	if err != nil {
 		return "", "", "", err
 	}
@@ -88,7 +88,7 @@ func Verify(secretKey string, r *http.Request, timestamp, nonce, signature strin
 	if secretKey == "" || timestamp == "" || nonce == "" || signature == "" {
 		return false
 	}
-	payload, err := BuildPayload(r, timestamp, nonce)
+	payload, err := buildPayload(r, timestamp, nonce)
 	if err != nil {
 		return false
 	}
@@ -101,15 +101,15 @@ func Verify(secretKey string, r *http.Request, timestamp, nonce, signature strin
 	)
 }
 
-// BuildPayload 构建签名 payload
-func BuildPayload(r *http.Request, timestamp, nonce string) (string, error) {
+// buildPayload 构建签名 payload
+func buildPayload(r *http.Request, timestamp, nonce string) (string, error) {
 	// host
 	host := r.Header.Get("Host")
 	if host == "" {
 		host = r.Host
 	}
 	// 读取 body
-	bodyBytes, err := ReadBodyBytes(r)
+	bodyBytes, err := readBodyBytes(r)
 	if err != nil {
 		return "", err
 	}
@@ -133,8 +133,8 @@ func BuildPayload(r *http.Request, timestamp, nonce string) (string, error) {
 	return payload, nil
 }
 
-// ReadBodyBytes 读取 body 内容
-func ReadBodyBytes(r *http.Request) ([]byte, error) {
+// readBodyBytes 读取 body 内容
+func readBodyBytes(r *http.Request) ([]byte, error) {
 	var bodyBytes []byte
 	var err error
 	if r.Body != nil {

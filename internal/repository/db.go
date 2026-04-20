@@ -44,7 +44,7 @@ func (db *DBManager) GetApiKeyInfo(secretID string) (*models.APIKeyInfo, bool, e
 		return nil, false, err
 	}
 	// 获取关联的路由ID
-	routeIDs, err := db.GetApiKeyRouteIDsWithCtx(ctx, apiKey.ID)
+	routeIDs, err := db.getApiKeyRouteIDsWithCtx(ctx, apiKey.ID)
 	if err != nil {
 		return nil, false, err
 	}
@@ -63,8 +63,8 @@ func (db *DBManager) GetApiKeyInfo(secretID string) (*models.APIKeyInfo, bool, e
 	return &apiKey, true, nil
 }
 
-// GetApiKeyRouteIDsWithCtx 根据密钥ID获取其所有允许访问的路由ID
-func (db *DBManager) GetApiKeyRouteIDsWithCtx(ctx context.Context, keyID int64) ([]int64, error) {
+// getApiKeyRouteIDsWithCtx 根据密钥ID获取其所有允许访问的路由ID
+func (db *DBManager) getApiKeyRouteIDsWithCtx(ctx context.Context, keyID int64) ([]int64, error) {
 	var routeIDs []int64
 	query := `SELECT route_id FROM api_key_routes WHERE key_id = ?`
 	err := db.db.SelectContext(ctx, &routeIDs, query, keyID)
@@ -165,7 +165,6 @@ func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
 	cfg := config.Get()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
 	defer cancel()
-	// 获取所有路由
 	var dbRoutes []models.Route
 	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.ip_limit, r.country_limit, r.qps, r.qpm, r.enabled
               FROM routes r 

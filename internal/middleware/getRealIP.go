@@ -18,7 +18,7 @@ func GetRealIP(app *app.App) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			ip := GetClientIP(r)
+			ip := getClientIP(r)
 			if ip == "" {
 				logger.WithRequestLogCtx(ctx).Warn("IP解析插件: 客户端IP为空")
 				utils.BadRequest(w, "empty ip")
@@ -65,8 +65,8 @@ func GetRealIP(app *app.App) Middleware {
 	}
 }
 
-// GetClientIP 获取客户端 IP 地址
-func GetClientIP(r *http.Request) string {
+// getClientIP 获取客户端 IP 地址
+func getClientIP(r *http.Request) string {
 	// X-Forwarded-For
 	if xff := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); xff != "" {
 		parts := strings.Split(xff, ",")

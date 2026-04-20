@@ -14,7 +14,7 @@ func CreateFolder() {
 		cfg.Gateway.TempPath,
 	}
 	for _, path := range paths {
-		err := IsFolderExist(path)
+		err := isFolderExist(path)
 		if err != nil {
 			fmt.Printf("创建目录失败 (%s)\n", path)
 			_, err := fmt.Scanln()
@@ -26,8 +26,8 @@ func CreateFolder() {
 	}
 }
 
-// IsFolderExist 判断文件夹是否存在, 不存在则创建
-func IsFolderExist(name string) error {
+// isFolderExist 判断文件夹是否存在, 不存在则创建
+func isFolderExist(name string) error {
 	if _, err := os.Stat(name); os.IsNotExist(err) {
 		return os.MkdirAll(name, 0755)
 	}

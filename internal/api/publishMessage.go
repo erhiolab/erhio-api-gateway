@@ -12,8 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// PublishMessageRequest 发布消息请求
-type PublishMessageRequest struct {
+// publishMessageRequest 发布消息请求
+type publishMessageRequest struct {
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`
 }
@@ -23,7 +23,7 @@ func PublishMessage(app *app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		// 解析请求体
-		var req PublishMessageRequest
+		var req publishMessageRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			utils.BadRequest(w, "invalid request body")
 			return

@@ -16,7 +16,7 @@ func GetUserAgent() Middleware {
 			if ua == "" {
 				ua = "unknown"
 			}
-			device := ParseUserAgent(ua)
+			device := parseUserAgent(ua)
 			var userAgent = &models.UserAgent{
 				UserAgent: ua,
 				Device:    device,
@@ -28,8 +28,8 @@ func GetUserAgent() Middleware {
 	}
 }
 
-// ParseUserAgent 解析客户端 User-Agent
-func ParseUserAgent(ua string) string {
+// parseUserAgent 解析客户端 User-Agent
+func parseUserAgent(ua string) string {
 	if ua == "" {
 		return "Unknown"
 	}

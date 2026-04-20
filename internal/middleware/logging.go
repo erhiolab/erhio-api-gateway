@@ -16,7 +16,7 @@ func Logging() Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			start := time.Now()
-			wrapped := &ResponseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
+			wrapped := &responseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
 			// 先执行请求
 			next.ServeHTTP(wrapped, r)
 			node := models.ServiceNode{}

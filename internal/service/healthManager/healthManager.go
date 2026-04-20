@@ -8,16 +8,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// Status 健康状态
-type Status int32
+// status 健康状态
+type status int32
 
 const (
-	Healthy Status = iota
+	Healthy status = iota
 	Unhealthy
 )
 
-// Checker 健康检查器
-type Checker struct {
+// checker 健康检查器
+type checker struct {
 	name             string
 	status           int32
 	failCount        int32
@@ -28,22 +28,22 @@ type Checker struct {
 
 // Manager 健康管理器
 type Manager struct {
-	checkers map[string]*Checker
+	checkers map[string]*checker
 	mu       sync.RWMutex
 }
 
-// Global 全局健康管理器
-var global = NewManager()
+// global 全局健康管理器
+var global = newManager()
 
 // Global 获取全局健康管理器
 func Global() *Manager {
 	return global
 }
 
-// NewManager 创建新的健康管理器
-func NewManager() *Manager {
+// newManager 创建新的健康管理器
+func newManager() *Manager {
 	return &Manager{
-		checkers: make(map[string]*Checker),
+		checkers: make(map[string]*checker),
 	}
 }
 
@@ -51,7 +51,7 @@ func NewManager() *Manager {
 func (m *Manager) Register(name string, failThreshold, successThreshold int32) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.checkers[name] = &Checker{
+	m.checkers[name] = &checker{
 		name:             name,
 		status:           int32(Healthy),
 		failThreshold:    failThreshold,

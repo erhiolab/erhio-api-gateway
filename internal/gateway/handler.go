@@ -35,14 +35,14 @@ func Handler(app *app.App) http.Handler {
 			utils.NotFound(w)
 			return
 		}
-		mws := Build(route, app)
+		mws := build(route, app)
 		handler := middleware.Chain(core, mws...)
 		handler.ServeHTTP(w, r)
 	})
 }
 
-// Build 构建中间件链
-func Build(route *models.Route, app *app.App) []middleware.Middleware {
+// build 构建中间件链
+func build(route *models.Route, app *app.App) []middleware.Middleware {
 	var mws []middleware.Middleware
 	if route.RequireAuth {
 		mws = append(
