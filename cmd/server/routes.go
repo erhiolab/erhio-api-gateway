@@ -26,7 +26,7 @@ func initRoutes(app *app.App) {
 		middleware.GetUserAgent(),
 		middleware.Router(app),
 		middleware.LoadBalancer(),
-		middleware.RateLimit(app),
+		middleware.RateLimit(),
 		middleware.Logging(),
 	)
 	http.Handle("/", proxyHandler)

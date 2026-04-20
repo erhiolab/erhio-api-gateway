@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"elake-api-gateway/internal/app"
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
+	"hash/fnv"
 	"net/http"
 	"sync"
 	"time"
@@ -13,10 +15,14 @@ import (
 	"go.uber.org/zap"
 )
 
+const shardCount = 64
+
 // localRateLimiter QPS本地限流器
 type localRateLimiter struct {
-	mu       sync.RWMutex
-	counters map[string]*slidingWindowCounter
+	shards [shardCount]struct {
+		mu       sync.Mutex
+		counters map[string]*slidingWindowCounter
+	}
 }
 
 // slidingWindowCounter 滑动窗口计数器
@@ -26,22 +32,37 @@ type slidingWindowCounter struct {
 }
 
 // globalRateLimiter 全局 QPS 本地限流器
-var globalRateLimiter = &localRateLimiter{
-	counters: make(map[string]*slidingWindowCounter),
+var globalRateLimiter = &localRateLimiter{}
+
+// init 初始化 QPS 本地限流器的计数器映射
+func init() {
+	for i := range globalRateLimiter.shards {
+		globalRateLimiter.shards[i].counters = make(map[string]*slidingWindowCounter)
+	}
 }
 
-// checkQPS 检查 QPS 限流(本地滑动窗口)
+// getShard 获取 QPS 本地限流器的分片索引
+func (l *localRateLimiter) getShard(key string) int {
+	h := fnv.New32a()
+	_, err := h.Write([]byte(key))
+	if err != nil {
+		return 0
+	}
+	return int(h.Sum32()) % shardCount
+}
+
+// checkQPS 检查 QPS 本地限流器是否超过限制
 func (l *localRateLimiter) checkQPS(key string, limit int64) bool {
 	if limit <= 0 {
 		return true
 	}
 	now := time.Now()
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	counter, ok := l.counters[key]
-	// 如果是新的一秒, 重置窗口
+	s := &l.shards[l.getShard(key)]
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	counter, ok := s.counters[key]
 	if !ok || now.Sub(counter.windowStart) >= time.Second {
-		l.counters[key] = &slidingWindowCounter{
+		s.counters[key] = &slidingWindowCounter{
 			windowStart: now,
 			count:       1,
 		}
@@ -54,10 +75,12 @@ func (l *localRateLimiter) checkQPS(key string, limit int64) bool {
 	return true
 }
 
-// tokenBucket 令牌桶
+// tokenBucket 令牌桶限流器
 type tokenBucket struct {
-	mu      sync.RWMutex
-	buckets map[string]*bucket
+	shards [shardCount]struct {
+		mu      sync.Mutex
+		buckets map[string]*bucket
+	}
 }
 
 // bucket 令牌桶
@@ -66,34 +89,44 @@ type bucket struct {
 	lastRefill time.Time
 }
 
-// globalTokenBucket 全局令牌桶
-var globalTokenBucket = &tokenBucket{
-	buckets: make(map[string]*bucket),
+// globalTokenBucket 全局令牌桶限流器
+var globalTokenBucket = &tokenBucket{}
+
+// init 初始化令牌桶限流器的令牌桶映射
+func init() {
+	for i := range globalTokenBucket.shards {
+		globalTokenBucket.shards[i].buckets = make(map[string]*bucket)
+	}
 }
 
-// checkQPM 检查 QPM 限流(本地令牌桶)
+// getShard 获取令牌桶限流器的分片索引
+func (tb *tokenBucket) getShard(key string) int {
+	h := fnv.New32a()
+	_, err := h.Write([]byte(key))
+	if err != nil {
+		return 0
+	}
+	return int(h.Sum32()) % shardCount
+}
+
+// checkQPM 检查令牌桶限流器是否超过限制
 func (tb *tokenBucket) checkQPM(key string, limit int64) bool {
 	if limit <= 0 {
 		return true
 	}
-
-	// 每分钟补充 limit 个, 每秒补充 limit/60.0 个
 	refillRate := float64(limit) / 60.0
 	now := time.Now()
-
-	tb.mu.Lock()
-	defer tb.mu.Unlock()
-
-	b, ok := tb.buckets[key]
+	s := &tb.shards[tb.getShard(key)]
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b, ok := s.buckets[key]
 	if !ok {
 		b = &bucket{
 			tokens:     float64(limit),
 			lastRefill: now,
 		}
-		tb.buckets[key] = b
+		s.buckets[key] = b
 	}
-
-	// 补充令牌
 	elapsed := now.Sub(b.lastRefill).Seconds()
 	b.tokens += elapsed * refillRate
 	if b.tokens > float64(limit) {
@@ -107,35 +140,86 @@ func (tb *tokenBucket) checkQPM(key string, limit int64) bool {
 	return true
 }
 
-// init 初始化限流器
+// syncItem 同步项
+type syncItem struct {
+	key string
+	ttl time.Duration
+}
+
+// syncCh 同步通道
+var syncCh = make(chan syncItem, 65536)
+
+// init 初始化令牌桶限流器的同步通道
 func init() {
-	// 定期清理过期的本地缓存, 防止内存泄漏
 	go func() {
-		ticker := time.NewTicker(1 * time.Minute)
-		for range ticker.C {
-			now := time.Now()
-			// 清理 QPS
-			globalRateLimiter.mu.Lock()
-			for k, v := range globalRateLimiter.counters {
-				if now.Sub(v.windowStart) > 10*time.Second {
-					delete(globalRateLimiter.counters, k)
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
+		batch := make(map[string]time.Duration)
+		for {
+			select {
+			case item := <-syncCh:
+				batch[item.key] = item.ttl
+			case <-ticker.C:
+				if len(batch) == 0 {
+					continue
 				}
+				flushBatch(batch)
+				batch = make(map[string]time.Duration)
 			}
-			globalRateLimiter.mu.Unlock()
-			// 清理 QPM
-			globalTokenBucket.mu.Lock()
-			for k, v := range globalTokenBucket.buckets {
-				if now.Sub(v.lastRefill) > 5*time.Minute {
-					delete(globalTokenBucket.buckets, k)
-				}
-			}
-			globalTokenBucket.mu.Unlock()
 		}
 	}()
 }
 
-// RateLimit 限流器插件
-func RateLimit(app *app.App) Middleware {
+// flushBatch 批量同步令牌桶限流器的令牌桶到 Redis
+func flushBatch(batch map[string]time.Duration) {
+	redisClient := app.GetRedisClient()
+	if redisClient == nil {
+		return
+	}
+	pipe := redisClient.Pipeline()
+	for k, ttl := range batch {
+		pipe.Incr(context.Background(), k)
+		pipe.Expire(context.Background(), k, ttl)
+	}
+	if _, err := pipe.Exec(context.Background()); err != nil {
+		logger.Log.Debug("限流器插件: 批量同步 Redis 失败",
+			zap.Error(err),
+		)
+	}
+}
+
+// init 初始化令牌桶限流器的定时任务
+func init() {
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		for range ticker.C {
+			now := time.Now()
+			for i := range globalRateLimiter.shards {
+				s := &globalRateLimiter.shards[i]
+				s.mu.Lock()
+				for k, v := range s.counters {
+					if now.Sub(v.windowStart) > 10*time.Second {
+						delete(s.counters, k)
+					}
+				}
+				s.mu.Unlock()
+			}
+			for i := range globalTokenBucket.shards {
+				s := &globalTokenBucket.shards[i]
+				s.mu.Lock()
+				for k, v := range s.buckets {
+					if now.Sub(v.lastRefill) > 5*time.Minute {
+						delete(s.buckets, k)
+					}
+				}
+				s.mu.Unlock()
+			}
+		}
+	}()
+}
+
+// RateLimit 令牌桶限流中间件
+func RateLimit() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -163,18 +247,15 @@ func RateLimit(app *app.App) Middleware {
 				return
 			}
 			if apiKeyInfo.SecretID != "" {
-				// 按 API Key 限流
 				prefix := cfg.Redis.ProjectPrefix + ":limit:key:" + apiKeyInfo.SecretID
 				qpmKey = prefix + ":qpm"
 				qpsKey = prefix + ":qps"
 				qpmLimit = apiKeyInfo.QPM
 				qpsLimit = apiKeyInfo.QPS
 			} else if ipLoc != nil {
-				// 按 IP 限流
 				prefix := cfg.Redis.ProjectPrefix + ":limit:ip:" + ipLoc.IP
 				qpmKey = prefix + ":qpm"
 				qpsKey = prefix + ":qps"
-				// 如果路由没配置限流, 则使用全局配置
 				qpmLimit = route.QPM
 				if qpmLimit <= 0 {
 					qpmLimit = cfg.DatabaseConfig.Auth.QpmLimit
@@ -184,7 +265,6 @@ func RateLimit(app *app.App) Middleware {
 					qpsLimit = cfg.DatabaseConfig.Auth.QpsLimit
 				}
 			}
-			// 执行 QPS 限流 (本地滑动窗口 + 异步同步 Redis)
 			if qpsLimit > 0 {
 				if !globalRateLimiter.checkQPS(qpsKey, qpsLimit) {
 					logger.WithRequestLogCtx(ctx).Warn("限流器插件: QPS限制超出",
@@ -194,15 +274,11 @@ func RateLimit(app *app.App) Middleware {
 					utils.TooManyRequests(w)
 					return
 				}
-				// 异步同步 QPS 到 Redis
-				go func(k string) {
-					_, err := app.Redis.IncrAndExpire(k, time.Second, false)
-					if err != nil {
-						logger.Log.Debug("限流器插件: 同步 QPS 到 Redis 失败", zap.Error(err))
-					}
-				}(qpsKey)
+				select {
+				case syncCh <- syncItem{key: qpsKey, ttl: time.Second}:
+				default:
+				}
 			}
-			// 执行 QPM 限流 (本地桶 + 异步同步 Redis)
 			if qpmLimit > 0 {
 				if !globalTokenBucket.checkQPM(qpmKey, qpmLimit) {
 					logger.WithRequestLogCtx(ctx).Warn("限流器插件: QPM限制超出",
@@ -212,15 +288,10 @@ func RateLimit(app *app.App) Middleware {
 					utils.TooManyRequests(w)
 					return
 				}
-				// 异步同步 QPM 到 Redis
-				go func(k string) {
-					_, err := app.Redis.IncrAndExpire(k, time.Minute, false)
-					if err != nil {
-						logger.Log.Debug("限流器插件: 同步 QPM 到 Redis 失败",
-							zap.Error(err),
-						)
-					}
-				}(qpmKey)
+				select {
+				case syncCh <- syncItem{key: qpmKey, ttl: time.Minute}:
+				default:
+				}
 			}
 			next.ServeHTTP(w, r)
 		})

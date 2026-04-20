@@ -6,6 +6,7 @@ import (
 	"elake-api-gateway/internal/middleware"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
+	"fmt"
 	"net/http"
 	"sync"
 )
@@ -50,17 +51,17 @@ func Handler(app *app.App) http.Handler {
 
 // buildMiddlewareCacheKey 构建中间件缓存键
 func buildMiddlewareCacheKey(route *models.Route) string {
-	key := ""
-	if route.RequireAuth {
-		key += "a"
+	return fmt.Sprintf("%d:a%d:i%d:c%d", route.ID,
+		boolToInt(route.RequireAuth),
+		boolToInt(route.IpLimit),
+		boolToInt(route.CountryLimit))
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
 	}
-	if route.IpLimit {
-		key += "i"
-	}
-	if route.CountryLimit {
-		key += "c"
-	}
-	return key
+	return 0
 }
 
 // getOrBuildMiddleware 获取或构建中间件链（带缓存）

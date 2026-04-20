@@ -8,30 +8,38 @@ import (
 	"elake-api-gateway/internal/storage"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
+var globalApp *App
+
 // New 创建一个新的应用实例
 func New() *App {
-	// 初始化数据库
 	dbClient := repository.NewDBManager(storage.InitDB())
-	// 初始化 Redis
 	redisClient := repository.NewRedisManager(storage.InitRedis())
-	// 初始化本地缓存
 	localCache := storage.NewLocalCache(time.Minute)
-	// 初始化 IPDB
 	ipdb := repository.NewIPDBManager(storage.InitIPDB())
-	// 初始化并发限制器
 	concurrencyLimiter.Init()
 	limiter := concurrencyLimiter.Get()
 
-	return &App{
+	a := &App{
 		DB:                 dbClient,
 		Redis:              redisClient,
 		LocalCache:         localCache,
 		IPDB:               ipdb,
 		ConcurrencyLimiter: limiter,
 	}
+	globalApp = a
+	return a
+}
+
+// GetRedisClient 获取底层 Redis 客户端(用于 Pipeline 等高级操作)
+func GetRedisClient() *redis.Client {
+	if globalApp == nil || globalApp.Redis == nil {
+		return nil
+	}
+	return globalApp.Redis.GetClient()
 }
 
 // LoadConfigFromDB 从数据库加载配置

@@ -192,7 +192,6 @@ func snapshotRequestBody(r *http.Request) (func() error, error) {
 	if err := r.Body.Close(); err != nil {
 		return nil, err
 	}
-	// 将 buffer 放入 pool 供后续复用
 	r.GetBody = func() (io.ReadCloser, error) {
 		if len(body) == 0 {
 			return http.NoBody, nil
@@ -218,18 +217,31 @@ func newUpstreamTransport() *http.Transport {
 	if cfg.Redis.DialTimeout > 0 {
 		timeout = time.Duration(cfg.Redis.DialTimeout) * time.Second
 	}
+	maxIdleConns := cfg.Gateway.MaxIdleConns
+	if maxIdleConns <= 0 {
+		maxIdleConns = 500
+	}
+	maxIdleConnsPerHost := cfg.Gateway.MaxIdleConnsPerHost
+	if maxIdleConnsPerHost <= 0 {
+		maxIdleConnsPerHost = 100
+	}
+	idleConnTimeout := cfg.Gateway.IdleConnTimeout
+	if idleConnTimeout <= 0 {
+		idleConnTimeout = 90
+	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.Proxy = http.ProxyFromEnvironment
 	transport.DialContext = (&net.Dialer{
 		Timeout:   timeout,
 		KeepAlive: 30 * time.Second,
 	}).DialContext
-	transport.MaxIdleConns = cfg.Gateway.MaxIdleConns
-	transport.MaxIdleConnsPerHost = cfg.Gateway.MaxIdleConnsPerHost
-	transport.IdleConnTimeout = time.Duration(cfg.Gateway.IdleConnTimeout) * time.Second
+	transport.MaxIdleConns = maxIdleConns
+	transport.MaxIdleConnsPerHost = maxIdleConnsPerHost
+	transport.IdleConnTimeout = time.Duration(idleConnTimeout) * time.Second
 	transport.TLSHandshakeTimeout = timeout
 	transport.ResponseHeaderTimeout = timeout
 	transport.ExpectContinueTimeout = time.Second
+	transport.DisableKeepAlives = false
 	return transport
 }
 

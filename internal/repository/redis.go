@@ -141,6 +141,11 @@ func (r *RedisManager) GetKeysByPattern(pattern string) ([]string, error) {
 	return keys, nil
 }
 
+// GetClient 获取底层 Redis 客户端
+func (r *RedisManager) GetClient() *redis.Client {
+	return r.client
+}
+
 // Close 关闭 Redis 连接
 func (r *RedisManager) Close() error {
 	if r.client != nil {
