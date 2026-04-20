@@ -16,6 +16,10 @@ gateway:
     max-idle-conns-per-host: 50
     # 空闲连接超时时间(秒)
     idle-conn-timeout: 90
+    # UUID池大小
+    uuid-pool-size: 4096
+    # UUID池低水位(低于此值触发异步补充)
+    uuid-pool-low-mark: 1024
 
 # 日志配置
 logger:
