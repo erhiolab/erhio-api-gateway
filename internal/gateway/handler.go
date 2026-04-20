@@ -7,7 +7,14 @@ import (
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
 	"net/http"
+	"sync"
 )
+
+// middlewareCache 中间件缓存
+var middlewareCache = struct {
+	sync.RWMutex
+	m map[string][]middleware.Middleware
+}{m: make(map[string][]middleware.Middleware)}
 
 // Handler 处理请求
 func Handler(app *app.App) http.Handler {
@@ -35,10 +42,47 @@ func Handler(app *app.App) http.Handler {
 			utils.NotFound(w)
 			return
 		}
-		mws := build(route, app)
+		mws := getOrBuildMiddleware(route, app)
 		handler := middleware.Chain(core, mws...)
 		handler.ServeHTTP(w, r)
 	})
+}
+
+// buildMiddlewareCacheKey 构建中间件缓存键
+func buildMiddlewareCacheKey(route *models.Route) string {
+	key := ""
+	if route.RequireAuth {
+		key += "a"
+	}
+	if route.IpLimit {
+		key += "i"
+	}
+	if route.CountryLimit {
+		key += "c"
+	}
+	return key
+}
+
+// getOrBuildMiddleware 获取或构建中间件链（带缓存）
+func getOrBuildMiddleware(route *models.Route, app *app.App) []middleware.Middleware {
+	cacheKey := buildMiddlewareCacheKey(route)
+	// 先尝试读缓存
+	middlewareCache.RLock()
+	if mws, ok := middlewareCache.m[cacheKey]; ok {
+		middlewareCache.RUnlock()
+		return mws
+	}
+	middlewareCache.RUnlock()
+	// 缓存未命中, 构建中间件链
+	middlewareCache.Lock()
+	defer middlewareCache.Unlock()
+	// 双重检查, 避免并发构建
+	if mws, ok := middlewareCache.m[cacheKey]; ok {
+		return mws
+	}
+	mws := build(route, app)
+	middlewareCache.m[cacheKey] = mws
+	return mws
 }
 
 // build 构建中间件链

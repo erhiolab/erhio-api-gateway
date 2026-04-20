@@ -97,7 +97,7 @@ func InitIPDB() *IPDB {
 				healthManager.Global().Report("IPDB", errors.New("ipdb nil"))
 				continue
 			}
-			_, err := ipdb.Get_all("8.8.8.8")
+			_, err := ipdb.Get_country_short("8.8.8.8")
 			healthManager.Global().Report("IPDB", err)
 		}
 	}()

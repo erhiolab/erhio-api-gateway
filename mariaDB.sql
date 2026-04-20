@@ -8,7 +8,7 @@ CREATE TABLE api_gateway_config
 (
 	id          VARCHAR(255) PRIMARY KEY COMMENT '配置ID',
 	group_name  VARCHAR(64)                            NOT NULL COMMENT '配置分组',
-	type        ENUM ('string', 'int', 'bool', 'json') NOT NULL COMMENT '类型',
+	type        ENUM ('string', 'int', 'float', 'bool', 'json') NOT NULL COMMENT '类型',
 	value       TEXT COMMENT '配置值',
 	title       VARCHAR(255) DEFAULT NULL COMMENT '配置标题',
 	description VARCHAR(255) DEFAULT NULL COMMENT '配置说明',

@@ -7,6 +7,9 @@ type GatewayConfig struct {
 	TempPath             string `yaml:"temp-path"`
 	MaxConcurrencyPerCPU int    `yaml:"max-concurrency-per-cpu"`
 	RecalculateInterval  int    `yaml:"recalculate-interval"`
+	MaxIdleConns         int    `yaml:"max-idle-conns"`
+	MaxIdleConnsPerHost  int    `yaml:"max-idle-conns-per-host"`
+	IdleConnTimeout      int    `yaml:"idle-conn-timeout"`
 }
 
 // LoggerConfig 日志配置
@@ -58,9 +61,11 @@ type RedisConfig struct {
 	ProjectPrefix         string `yaml:"project-prefix"`
 	MinIdleConnections    int    `yaml:"min-idle-connections"`
 	ConnectionMaxIdleTime int    `yaml:"connection-max-idle-time"`
+	ConnMaxLifetime       int    `yaml:"conn-max-lifetime"`
 	DialTimeout           int    `yaml:"dial-timeout"`
 	ReadTimeout           int    `yaml:"read-timeout"`
 	WriteTimeout          int    `yaml:"write-timeout"`
+	PoolTimeout           int    `yaml:"pool-timeout"`
 }
 
 // IPDBConfig IPDB配置

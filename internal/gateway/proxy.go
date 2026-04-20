@@ -192,6 +192,7 @@ func snapshotRequestBody(r *http.Request) (func() error, error) {
 	if err := r.Body.Close(); err != nil {
 		return nil, err
 	}
+	// 将 buffer 放入 pool 供后续复用
 	r.GetBody = func() (io.ReadCloser, error) {
 		if len(body) == 0 {
 			return http.NoBody, nil
@@ -223,6 +224,9 @@ func newUpstreamTransport() *http.Transport {
 		Timeout:   timeout,
 		KeepAlive: 30 * time.Second,
 	}).DialContext
+	transport.MaxIdleConns = cfg.Gateway.MaxIdleConns
+	transport.MaxIdleConnsPerHost = cfg.Gateway.MaxIdleConnsPerHost
+	transport.IdleConnTimeout = time.Duration(cfg.Gateway.IdleConnTimeout) * time.Second
 	transport.TLSHandshakeTimeout = timeout
 	transport.ResponseHeaderTimeout = timeout
 	transport.ExpectContinueTimeout = time.Second

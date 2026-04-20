@@ -29,6 +29,8 @@ func InitRedis() *redis.Client {
 		DialTimeout:     time.Duration(cfg.Redis.DialTimeout) * time.Second,
 		ReadTimeout:     time.Duration(cfg.Redis.ReadTimeout) * time.Second,
 		WriteTimeout:    time.Duration(cfg.Redis.WriteTimeout) * time.Second,
+		ConnMaxLifetime: time.Duration(cfg.Redis.ConnMaxLifetime) * time.Minute,
+		PoolTimeout:     time.Duration(cfg.Redis.PoolTimeout) * time.Second,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
