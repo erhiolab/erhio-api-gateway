@@ -10,89 +10,46 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	// uuidPoolSize UUID池大小
-	defaultUUIDPoolSize    = 4096
-	// uuidPoolLowMark UUID池低水位
-	defaultUUIDPoolLowMark = defaultUUIDPoolSize / 4
-)
+// uuidPoolSize UUID池大小
+const defaultUUIDPoolSize = 4096
 
 // uuidPool UUID池
 type uuidPool struct {
-	mu      sync.Mutex
-	pool    []string
-	filling bool
-	inited  bool
-	size    int
-	lowMark int
+	ch   chan string
+	once sync.Once
+	size int
 }
 
 // globalUUIDPool 全局 UUID池
 var globalUUIDPool = &uuidPool{}
 
-// init 初始化 UUID池
-func (p *uuidPool) init() {
-	p.mu.Lock()
-	if p.inited {
-		p.mu.Unlock()
-		return
-	}
-	cfg := config.Get()
-	p.size = cfg.Gateway.UUIDPoolSize
-	if p.size <= 0 {
-		p.size = defaultUUIDPoolSize
-	}
-	p.lowMark = cfg.Gateway.UUIDPoolLowMark
-	if p.lowMark <= 0 {
-		p.lowMark = defaultUUIDPoolLowMark
-	}
-	p.inited = true
-	p.mu.Unlock()
-	p.refill()
-}
-
-// refill 填充 UUID池
-func (p *uuidPool) refill() {
-	p.mu.Lock()
-	if p.filling {
-		p.mu.Unlock()
-		return
-	}
-	p.filling = true
-	size := p.size
-	p.mu.Unlock()
-
-	buf := make([]string, size)
-	for i := range buf {
-		buf[i] = uuid.New().String()
-	}
-
-	p.mu.Lock()
-	p.pool = append(p.pool, buf...)
-	p.filling = false
-	p.mu.Unlock()
+// initPool 初始化池子并启动后台生产者
+func (p *uuidPool) initPool() {
+	p.once.Do(func() {
+		cfg := config.Get()
+		p.size = cfg.Gateway.UUIDPoolSize
+		if p.size <= 0 {
+			p.size = defaultUUIDPoolSize
+		}
+		p.ch = make(chan string, p.size)
+		go func() {
+			for {
+				p.ch <- uuid.New().String()
+			}
+		}()
+	})
 }
 
 // get 获取 UUID
 func (p *uuidPool) get() string {
-	if !p.inited {
-		p.init()
+	p.initPool()
+	select {
+	case id := <-p.ch:
+		return id
+	default:
+		// 降级为实时生成
+		return uuid.New().String()
 	}
-	p.mu.Lock()
-	n := len(p.pool)
-	if n > 0 {
-		s := p.pool[n-1]
-		p.pool = p.pool[:n-1]
-		lowMark := p.lowMark
-		low := n-1 < lowMark && !p.filling
-		p.mu.Unlock()
-		if low {
-			go p.refill()
-		}
-		return s
-	}
-	p.mu.Unlock()
-	return uuid.New().String()
 }
 
 // TraceID 追溯ID插件

@@ -30,6 +30,7 @@ func InitLogger() {
 
 // createLogger 创建日志记录器
 func createLogger(logPath string, cfg config.LoggerConfig) *zap.Logger {
+	level := parseLevel(cfg.Level)
 	// 配置文件输出
 	writeSyncer := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   logPath,
@@ -46,12 +47,38 @@ func createLogger(logPath string, cfg config.LoggerConfig) *zap.Logger {
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderCfg.LevelKey = "level"
 	encoderCfg.MessageKey = "msg"
-	// 创建核心, 同时输出到文件和控制台
-	core := zapcore.NewTee(
-		zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writeSyncer, zapcore.InfoLevel),
-		zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), consoleSyncer, zapcore.DebugLevel),
-	)
+	var cores []zapcore.Core
+	switch cfg.Output {
+	case "file":
+		cores = append(cores, zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writeSyncer, level))
+	case "console":
+		cores = append(cores, zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), consoleSyncer, level))
+	case "both":
+		fallthrough
+	default:
+		cores = append(cores,
+			zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writeSyncer, level),
+			zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), consoleSyncer, level),
+		)
+	}
+	core := zapcore.NewTee(cores...)
 	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+}
+
+// parseLevel 解析日志级别
+func parseLevel(level string) zapcore.Level {
+	switch level {
+	case "debug":
+		return zapcore.DebugLevel
+	case "info":
+		return zapcore.InfoLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	default:
+		return zapcore.InfoLevel
+	}
 }
 
 // WithRequestLogCtx 从 context 中获取 requestID 并添加到日志中

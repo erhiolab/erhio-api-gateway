@@ -11,12 +11,12 @@ type GatewayConfig struct {
 	MaxIdleConnsPerHost  int    `yaml:"max-idle-conns-per-host"`
 	IdleConnTimeout      int    `yaml:"idle-conn-timeout"`
 	UUIDPoolSize         int    `yaml:"uuid-pool-size"`
-	UUIDPoolLowMark      int    `yaml:"uuid-pool-low-mark"`
 }
 
 // LoggerConfig 日志配置
 type LoggerConfig struct {
 	Output         string `yaml:"output"`
+	Level          string `yaml:"level"`
 	LogPath        string `yaml:"log-path"`
 	RequestLogPath string `yaml:"request-log-path"`
 	MaxSize        int    `yaml:"max-size"`

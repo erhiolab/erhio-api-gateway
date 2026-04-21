@@ -11,20 +11,23 @@ gateway:
     # 重新计算并发上限的间隔(秒)
     recalculate-interval: 10
     # 最大空闲连接数
-    max-idle-conns: 100
+    max-idle-conns: 512
     # 每个主机最大空闲连接数
-    max-idle-conns-per-host: 50
+    max-idle-conns-per-host: 512
     # 空闲连接超时时间(秒)
     idle-conn-timeout: 90
     # UUID池大小
-    uuid-pool-size: 4096
-    # UUID池低水位(低于此值触发异步补充)
-    uuid-pool-low-mark: 1024
+    uuid-pool-size: 10000
 
 # 日志配置
 logger:
-    # 日志输出方式
-    output: "stdout"
+    # 日志输出方式 (both, file, stdout)
+    # both: 输出到文件和控制台
+    # file: 输出到文件
+    # stdout: 输出到控制台
+    output: "file"
+    # 日志级别 (debug, info, warn, error)
+    level: "warn"
     # 系统日志文件路径
     log-path: "logs/api-gateway.log"
     # 请求日志文件路径
