@@ -17,7 +17,7 @@ gateway:
     # 空闲连接超时时间(秒)
     idle-conn-timeout: 90
     # UUID池大小
-    uuid-pool-size: 10000
+    uuid-pool-size: 5000
 
 # 日志配置
 logger:
@@ -25,9 +25,9 @@ logger:
     # both: 输出到文件和控制台
     # file: 输出到文件
     # stdout: 输出到控制台
-    output: "file"
+    output: "both"
     # 日志级别 (debug, info, warn, error)
-    level: "warn"
+    level: "info"
     # 系统日志文件路径
     log-path: "logs/api-gateway.log"
     # 请求日志文件路径
