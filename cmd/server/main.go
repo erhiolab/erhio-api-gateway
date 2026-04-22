@@ -11,13 +11,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// main 主函数
-func main() {
+// init 初始化
+func init() {
 	// 加载基础配置
-	cfg := loadBaseConfig()
-	if cfg == nil {
+	cfg, err := config.Load()
+	if err != nil {
 		return
 	}
+	config.Set(cfg)
 
 	// 初始化日志
 	logger.InitLogger()
@@ -27,9 +28,14 @@ func main() {
 
 	// 创建目录
 	utils.CreateFolder()
+}
+
+// main 主函数
+func main() {
+	cfg := config.Get()
 
 	// 创建应用实例
-	appEngine := createAppEngine()
+	appEngine := app.New()
 	defer appEngine.Close()
 
 	// 初始化负载均衡器
@@ -50,21 +56,6 @@ func main() {
 
 	// 启动HTTP服务
 	startHTTPServer(mergedCfg)
-}
-
-// loadBaseConfig 加载基础配置
-func loadBaseConfig() *config.Config {
-	cfg, err := config.Load()
-	if err != nil {
-		return nil
-	}
-	config.Set(cfg)
-	return cfg
-}
-
-// createAppEngine 创建应用实例
-func createAppEngine() *app.App {
-	return app.New()
 }
 
 // startSubscription 启动消息订阅
