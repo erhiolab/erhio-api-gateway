@@ -13,31 +13,29 @@ import (
 func Ping(app *app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		// 获取网关信息
-		services, err := app.DB.GetAllServices()
+		servicesCount, err := app.DB.GetServicesCount()
 		if err != nil {
-			logger.WithRequestLogCtx(ctx).Error("获取服务列表失败", zap.Error(err))
+			logger.WithRequestLogCtx(ctx).Error("获取服务总数失败", zap.Error(err))
 			utils.InternalServerError(w)
 			return
 		}
-		// 计算所有服务节点数总和
-		nodeCount := 0
-		for _, service := range services {
-			nodeCount += len(service.Nodes)
-		}
-		// 计算路由数
-		routes, err := app.DB.GetAllRoutes()
+		nodesCount, err := app.DB.GetServiceNodesCount()
 		if err != nil {
-			logger.WithRequestLogCtx(ctx).Error("获取路由列表失败", zap.Error(err))
+			logger.WithRequestLogCtx(ctx).Error("获取节点总数失败", zap.Error(err))
 			utils.InternalServerError(w)
 			return
 		}
-		routeCount := len(routes)
+		routesCount, err := app.DB.GetRoutesCount()
+		if err != nil {
+			logger.WithRequestLogCtx(ctx).Error("获取路由总数失败", zap.Error(err))
+			utils.InternalServerError(w)
+			return
+		}
 		// 构建响应
 		response := map[string]interface{}{
-			"services": len(services),
-			"nodes":    nodeCount,
-			"routes":   routeCount,
+			"services": servicesCount,
+			"nodes":    nodesCount,
+			"routes":   routesCount,
 		}
 		utils.Success(w, response)
 	}

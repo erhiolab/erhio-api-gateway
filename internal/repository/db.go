@@ -46,6 +46,7 @@ func (db *DBManager) GetApiKeyInfo(secretID string) (*models.APIKeyInfo, bool, e
 	// 获取关联的路由ID
 	routeIDs, err := db.getApiKeyRouteIDsWithCtx(ctx, apiKey.ID)
 	if err != nil {
+		logger.Log.Error("查询API密钥关联路由错误", zap.Int64("keyID", apiKey.ID), zap.Error(err))
 		return nil, false, err
 	}
 	apiKey.RouteIDs = routeIDs
@@ -112,6 +113,7 @@ func (db *DBManager) GetServiceWithNodes(serviceID int64) (*models.Service, bool
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, false, nil
 		}
+		logger.Log.Error("查询服务基本信息错误", zap.Int64("serviceID", serviceID), zap.Error(err))
 		return nil, false, err
 	}
 	// 获取该服务下所有状态正常且未删除的节点
@@ -137,6 +139,7 @@ func (db *DBManager) GetAllServices() ([]models.Service, error) {
 	query := `SELECT id, name, base_path FROM services`
 	err := db.db.SelectContext(ctx, &dbServices, query)
 	if err != nil {
+		logger.Log.Error("查询服务列表错误", zap.Error(err))
 		return nil, err
 	}
 	services := make([]models.Service, 0, len(dbServices))
@@ -148,6 +151,7 @@ func (db *DBManager) GetAllServices() ([]models.Service, error) {
 				  WHERE service_id = ? AND status = 1 AND is_deleted = FALSE`
 		err := db.db.SelectContext(ctx, &nodes, nodeQuery, dbService.ID)
 		if err != nil {
+			logger.Log.Error("查询服务节点错误", zap.Int64("serviceID", dbService.ID), zap.Error(err))
 			return nil, err
 		}
 		services = append(services, models.Service{
@@ -158,6 +162,36 @@ func (db *DBManager) GetAllServices() ([]models.Service, error) {
 		})
 	}
 	return services, nil
+}
+
+// GetServicesCount 获取服务总数
+func (db *DBManager) GetServicesCount() (int64, error) {
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
+	defer cancel()
+	var count int64
+	query := `SELECT COUNT(*) FROM services`
+	err := db.db.GetContext(ctx, &count, query)
+	if err != nil {
+		logger.Log.Error("查询服务总数错误", zap.Error(err))
+		return 0, err
+	}
+	return count, nil
+}
+
+// GetServiceNodesCount 获取节点总数
+func (db *DBManager) GetServiceNodesCount() (int64, error) {
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
+	defer cancel()
+	var count int64
+	query := `SELECT COUNT(*) FROM service_nodes WHERE is_deleted = FALSE`
+	err := db.db.GetContext(ctx, &count, query)
+	if err != nil {
+		logger.Log.Error("查询节点总数错误", zap.Error(err))
+		return 0, err
+	}
+	return count, nil
 }
 
 // GetAllRoutes 获取所有路由
@@ -171,6 +205,7 @@ func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
               JOIN services s ON r.service_id = s.id`
 	err := db.db.SelectContext(ctx, &dbRoutes, query)
 	if err != nil {
+		logger.Log.Error("查询路由列表错误", zap.Error(err))
 		return nil, err
 	}
 	routes := make([]models.Route, 0, len(dbRoutes))
@@ -190,6 +225,21 @@ func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
 		})
 	}
 	return routes, nil
+}
+
+// GetRoutesCount 获取路由总数
+func (db *DBManager) GetRoutesCount() (int64, error) {
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
+	defer cancel()
+	var count int64
+	query := `SELECT COUNT(*) FROM routes`
+	err := db.db.GetContext(ctx, &count, query)
+	if err != nil {
+		logger.Log.Error("查询路由总数错误", zap.Error(err))
+		return 0, err
+	}
+	return count, nil
 }
 
 // GetDB 获取数据库连接
