@@ -1,7 +1,13 @@
 # 网关配置
 gateway:
+    # 网关ID(当有多个网关时, 便于通过邮件通知区分网关)
+    id: "1"
     # 监听端口
     port: 8080
+    # 邮件通知用户名
+    email-username:
+        - "erhai_lake_0714@163.com"
+        - "erhai.lake.0714@gmail.com"
     # 数据路径
     data-path: "data"
     # 临时路径

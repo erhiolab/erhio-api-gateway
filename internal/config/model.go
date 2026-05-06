@@ -2,15 +2,17 @@ package config
 
 // GatewayConfig 网关配置
 type GatewayConfig struct {
-	Port                 int    `yaml:"port"`
-	DataPath             string `yaml:"data-path"`
-	TempPath             string `yaml:"temp-path"`
-	MaxConcurrencyPerCPU int    `yaml:"max-concurrency-per-cpu"`
-	RecalculateInterval  int    `yaml:"recalculate-interval"`
-	MaxIdleConns         int    `yaml:"max-idle-conns"`
-	MaxIdleConnsPerHost  int    `yaml:"max-idle-conns-per-host"`
-	IdleConnTimeout      int    `yaml:"idle-conn-timeout"`
-	UUIDPoolSize         int    `yaml:"uuid-pool-size"`
+	ID                   string   `yaml:"id"`
+	Port                 int      `yaml:"port"`
+	EmailUsername        []string `yaml:"email-username"`
+	DataPath             string   `yaml:"data-path"`
+	TempPath             string   `yaml:"temp-path"`
+	MaxConcurrencyPerCPU int      `yaml:"max-concurrency-per-cpu"`
+	RecalculateInterval  int      `yaml:"recalculate-interval"`
+	MaxIdleConns         int      `yaml:"max-idle-conns"`
+	MaxIdleConnsPerHost  int      `yaml:"max-idle-conns-per-host"`
+	IdleConnTimeout      int      `yaml:"idle-conn-timeout"`
+	UUIDPoolSize         int      `yaml:"uuid-pool-size"`
 }
 
 // LoggerConfig 日志配置

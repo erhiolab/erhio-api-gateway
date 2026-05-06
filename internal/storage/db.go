@@ -35,6 +35,7 @@ func InitDB() *sqlx.DB {
 		"DB",
 		cfg.Health.DBHealthCheckFailThreshold,
 		cfg.Health.DBHealthCheckOKThreshold,
+		true,
 	)
 	// 健康检查
 	go func() {

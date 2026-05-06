@@ -82,6 +82,40 @@ func LoadDatabaseConfig(db *sqlx.DB) (*DatabaseConfig, error) {
 			dbConfig.TotalTimeout = timeout
 		}
 	}
+	// 邮件配置
+	emailConfig := EmailConfig{}
+	// 邮件主机
+	if val, ok := configMap["email.host"]; ok {
+		emailConfig.Host = val
+	}
+	// 邮件端口
+	if val, ok := configMap["email.port"]; ok {
+		if port, err := strconv.Atoi(val); err == nil {
+			emailConfig.Port = port
+		}
+	}
+	// 邮件用户名
+	if val, ok := configMap["email.username"]; ok {
+		emailConfig.Username = val
+	}
+	// 邮件密码
+	if val, ok := configMap["email.password"]; ok {
+		emailConfig.Password = val
+	}
+	// 邮件超时时间
+	if val, ok := configMap["email.timeout"]; ok {
+		if timeout, err := strconv.Atoi(val); err == nil {
+			emailConfig.Timeout = timeout
+		}
+	}
+	// 邮件最大重试次数
+	if val, ok := configMap["email.max-retry"]; ok {
+		if retry, err := strconv.Atoi(val); err == nil {
+			emailConfig.MaxRetry = retry
+		}
+	}
+	// 邮件配置
+	dbConfig.Email = emailConfig
 	// 认证配置
 	authConfig := AuthConfig{}
 	// 加密密钥

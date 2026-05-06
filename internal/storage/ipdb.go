@@ -87,6 +87,7 @@ func InitIPDB() *IPDB {
 		"IPDB",
 		cfg.Health.IPDBHealthCheckFailThreshold,
 		cfg.Health.IPDBHealthCheckOKThreshold,
+		true,
 	)
 	// 健康检查
 	go func() {

@@ -1,9 +1,13 @@
 package healthManager
 
 import (
+	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
+	"elake-api-gateway/internal/service/email"
+	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -24,6 +28,7 @@ type checker struct {
 	successCount     int32
 	failThreshold    int32
 	successThreshold int32
+	sendEmail        bool
 }
 
 // Manager 健康管理器
@@ -48,19 +53,25 @@ func newManager() *Manager {
 }
 
 // Register 注册健康检查器
-func (m *Manager) Register(name string, failThreshold, successThreshold int32) {
+func (m *Manager) Register(name string, failThreshold, successThreshold int32, sendEmail bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if _, exists := m.checkers[name]; exists {
+		logger.Log.Warn("checker 已存在", zap.String("name", name))
+		return
+	}
 	m.checkers[name] = &checker{
 		name:             name,
 		status:           int32(Healthy),
 		failThreshold:    failThreshold,
 		successThreshold: successThreshold,
+		sendEmail:        sendEmail,
 	}
 }
 
 // Report 报告健康检查结果
 func (m *Manager) Report(name string, err error) {
+	cfg := config.Get().Gateway
 	m.mu.RLock()
 	c, ok := m.checkers[name]
 	m.mu.RUnlock()
@@ -70,19 +81,39 @@ func (m *Manager) Report(name string, err error) {
 	if err != nil {
 		atomic.AddInt32(&c.failCount, 1)
 		atomic.StoreInt32(&c.successCount, 0)
-		if c.failCount >= c.failThreshold &&
-			atomic.LoadInt32(&c.status) == int32(Healthy) {
-			logger.Log.Warn(name+" 服务异常", zap.Int32("failCount", c.failCount), zap.Error(err))
-			atomic.StoreInt32(&c.status, int32(Unhealthy))
+		if atomic.LoadInt32(&c.failCount) >= c.failThreshold &&
+			atomic.CompareAndSwapInt32(&c.status, int32(Healthy), int32(Unhealthy)) {
+			failCount := atomic.LoadInt32(&c.failCount)
+			atomic.StoreInt32(&c.failCount, 0)
+			logger.Log.Warn("服务异常",
+				zap.String("serviceName", name),
+				zap.Int32("failCount", failCount),
+				zap.Error(err),
+			)
+			if c.sendEmail {
+				_ = email.SendMail(&email.MailPayload{
+					To:      cfg.EmailUsername,
+					Subject: fmt.Sprintf("[洱海网关 %s] 服务异常", cfg.ID),
+					HTML:    true,
+					Body:    fmt.Sprintf(`<div style="font-family: Arial, sans-serif; line-height:1.6;"><h2 style="color:#d93025;">🚨 服务异常告警</h2><p><strong>网关实例: </strong>%s</p><p><strong>服务名称: </strong>%s</p><p><strong>失败次数: </strong>%d</p><p><strong>时间: </strong>%s</p><hr><p style="color:#999;">请尽快排查服务状态!</p></div>`, cfg.ID, name, failCount, time.Now().Format("2006-01-02 15:04:05")),
+				})
+			}
 		}
 		return
 	}
 	atomic.AddInt32(&c.successCount, 1)
 	atomic.StoreInt32(&c.failCount, 0)
-	if c.successCount >= c.successThreshold &&
-		atomic.LoadInt32(&c.status) == int32(Unhealthy) {
-		logger.Log.Info(name + " 服务恢复")
-		atomic.StoreInt32(&c.status, int32(Healthy))
+	if atomic.LoadInt32(&c.successCount) >= c.successThreshold && atomic.CompareAndSwapInt32(&c.status, int32(Unhealthy), int32(Healthy)) {
+		atomic.StoreInt32(&c.successCount, 0)
+		logger.Log.Info("服务恢复", zap.String("serviceName", name))
+		if c.sendEmail {
+			_ = email.SendMail(&email.MailPayload{
+				To:      cfg.EmailUsername,
+				Subject: fmt.Sprintf("[洱海网关 %s] 服务恢复", cfg.ID),
+				HTML:    true,
+				Body:    fmt.Sprintf(`<div style="font-family: Arial, sans-serif; line-height:1.6;"><h2 style="color:#188038;">✅ 服务恢复通知</h2><p><strong>网关实例: </strong>%s</p><p><strong>服务名称: </strong>%s</p><p><strong>状态: </strong>已恢复正常</p><p><strong>时间: </strong>%s</p><hr><p style="color:#999;">服务已恢复, 无需进一步操作.</p></div>`, cfg.ID, name, time.Now().Format("2006-01-02 15:04:05")),
+			})
+		}
 	}
 }
 
@@ -92,7 +123,7 @@ func (m *Manager) IsHealthy(name string) bool {
 	defer m.mu.RUnlock()
 	c, ok := m.checkers[name]
 	if !ok {
-		return true
+		return false
 	}
 	return atomic.LoadInt32(&c.status) == int32(Healthy)
 }

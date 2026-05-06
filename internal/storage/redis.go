@@ -42,6 +42,7 @@ func InitRedis() *redis.Client {
 		"Redis",
 		cfg.Health.RedisHealthCheckFailThreshold,
 		cfg.Health.RedisHealthCheckOKThreshold,
+		true,
 	)
 	// 健康检查
 	go func() {

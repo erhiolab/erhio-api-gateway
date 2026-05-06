@@ -9,6 +9,16 @@ VALUES
 ('gateway.node-timeout', 'gateway', 'int', '3', '节点超时时间(秒)', '默认3秒, 代理到单个节点的超时时间', 1),
 ('gateway.total-timeout', 'gateway', 'int', '10', '总超时时间(秒)', '默认10秒, 遍历所有节点的总超时限制', 1);
 
+-- Email配置
+INSERT INTO api_gateway_config (id, group_name, type, value, title, description, version)
+VALUES
+('email.host', 'email', 'string', 'smtp.qq.com', 'SMTP主机地址', '用于发送邮件的SMTP主机地址', 1),
+('email.port', 'email', 'int', '587', 'SMTP主机端口', '用于发送邮件的SMTP主机端口', 1),
+('email.username', 'email', 'string', '2444236088@qq.com', 'SMTP用户名', '用于发送邮件的SMTP用户名/邮箱', 1),
+('email.password', 'email', 'string', 'tgaiwyfrofceeacd', 'SMTP密码', '用于发送邮件的SMTP密码', 1),
+('email.timeout', 'email', 'int', '10', 'SMTP超时时间(秒)', '用于发送邮件的SMTP超时时间', 1),
+('email.max-retry', 'email', 'int', '3', '最大重试次数', '用于发送邮件的最大重试次数', 1);
+
 -- 认证配置
 INSERT INTO api_gateway_config (id, group_name, type, value, title, description, version)
 VALUES 
