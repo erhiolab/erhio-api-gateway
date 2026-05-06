@@ -13,21 +13,9 @@ import (
 func Ping(app *app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		servicesCount, err := app.DB.GetServicesCount()
+		servicesCount, nodesCount, routesCount, err := app.DB.GetDashboardStats()
 		if err != nil {
-			logger.WithRequestLogCtx(ctx).Error("获取服务总数失败", zap.Error(err))
-			utils.InternalServerError(w)
-			return
-		}
-		nodesCount, err := app.DB.GetServiceNodesCount()
-		if err != nil {
-			logger.WithRequestLogCtx(ctx).Error("获取节点总数失败", zap.Error(err))
-			utils.InternalServerError(w)
-			return
-		}
-		routesCount, err := app.DB.GetRoutesCount()
-		if err != nil {
-			logger.WithRequestLogCtx(ctx).Error("获取路由总数失败", zap.Error(err))
+			logger.WithRequestLogCtx(ctx).Error("统计仪表盘信息错误", zap.Error(err))
 			utils.InternalServerError(w)
 			return
 		}

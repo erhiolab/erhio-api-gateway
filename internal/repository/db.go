@@ -164,36 +164,6 @@ func (db *DBManager) GetAllServices() ([]models.Service, error) {
 	return services, nil
 }
 
-// GetServicesCount 获取服务总数
-func (db *DBManager) GetServicesCount() (int64, error) {
-	cfg := config.Get()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
-	defer cancel()
-	var count int64
-	query := `SELECT COUNT(*) FROM services`
-	err := db.db.GetContext(ctx, &count, query)
-	if err != nil {
-		logger.Log.Error("查询服务总数错误", zap.Error(err))
-		return 0, err
-	}
-	return count, nil
-}
-
-// GetServiceNodesCount 获取节点总数
-func (db *DBManager) GetServiceNodesCount() (int64, error) {
-	cfg := config.Get()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
-	defer cancel()
-	var count int64
-	query := `SELECT COUNT(*) FROM service_nodes WHERE is_deleted = FALSE`
-	err := db.db.GetContext(ctx, &count, query)
-	if err != nil {
-		logger.Log.Error("查询节点总数错误", zap.Error(err))
-		return 0, err
-	}
-	return count, nil
-}
-
 // GetAllRoutes 获取所有路由
 func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
 	cfg := config.Get()
@@ -227,19 +197,24 @@ func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
 	return routes, nil
 }
 
-// GetRoutesCount 获取路由总数
-func (db *DBManager) GetRoutesCount() (int64, error) {
+// GetDashboardStats 获取所有统计信息
+func (db *DBManager) GetDashboardStats() (int64, int64, int64, error) {
 	cfg := config.Get()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
 	defer cancel()
-	var count int64
-	query := `SELECT COUNT(*) FROM routes`
-	err := db.db.GetContext(ctx, &count, query)
+	var servicesCount, nodesCount, routesCount int64
+	query := `
+	SELECT 
+		(SELECT COUNT(*) FROM services) AS services_count,
+		(SELECT COUNT(*) FROM service_nodes WHERE is_deleted = FALSE) AS nodes_count,
+		(SELECT COUNT(*) FROM routes) AS routes_count
+	`
+	err := db.db.QueryRowContext(ctx, query).Scan(&servicesCount, &nodesCount, &routesCount)
 	if err != nil {
-		logger.Log.Error("查询路由总数错误", zap.Error(err))
-		return 0, err
+		logger.Log.Error("统计仪表盘信息错误", zap.Error(err))
+		return 0, 0, 0, err
 	}
-	return count, nil
+	return servicesCount, nodesCount, routesCount, nil
 }
 
 // GetDB 获取数据库连接
