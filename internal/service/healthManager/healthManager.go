@@ -93,9 +93,9 @@ func (m *Manager) Report(name string, err error) {
 			if c.sendEmail {
 				_ = email.SendMail(&email.MailPayload{
 					To:      cfg.EmailUsername,
-					Subject: fmt.Sprintf("[洱海网关 %s] 服务异常", cfg.ID),
+					Subject: fmt.Sprintf("[洱海网关 %s %s:%d] %s服务异常", cfg.ID, cfg.IP, cfg.Port, name),
 					HTML:    true,
-					Body:    fmt.Sprintf(`<div style="font-family: Arial, sans-serif; line-height:1.6;"><h2 style="color:#d93025;">🚨 服务异常告警</h2><p><strong>网关实例: </strong>%s</p><p><strong>服务名称: </strong>%s</p><p><strong>失败次数: </strong>%d</p><p><strong>时间: </strong>%s</p><hr><p style="color:#999;">请尽快排查服务状态!</p></div>`, cfg.ID, name, failCount, time.Now().Format("2006-01-02 15:04:05")),
+					Body:    fmt.Sprintf(`<div style="font-family: Arial, sans-serif; line-height:1.6;"><h2 style="color:#d93025;">🚨 服务异常告警</h2><p><strong>网关IP: </strong>%s:%d</p><p><strong>网关实例: </strong>%s</p><p><strong>服务名称: </strong>%s</p><p><strong>失败次数: </strong>%d</p><p><strong>时间: </strong>%s</p><hr><p style="color:#999;">请尽快排查服务状态!</p></div>`, cfg.IP, cfg.IP, cfg.ID, name, failCount, time.Now().Format("2006-01-02 15:04:05")),
 				})
 			}
 		}
@@ -109,9 +109,9 @@ func (m *Manager) Report(name string, err error) {
 		if c.sendEmail {
 			_ = email.SendMail(&email.MailPayload{
 				To:      cfg.EmailUsername,
-				Subject: fmt.Sprintf("[洱海网关 %s] 服务恢复", cfg.ID),
+				Subject: fmt.Sprintf("[洱海网关 %s %s:%d] %s服务恢复", cfg.ID, cfg.IP, cfg.Port, name),
 				HTML:    true,
-				Body:    fmt.Sprintf(`<div style="font-family: Arial, sans-serif; line-height:1.6;"><h2 style="color:#188038;">✅ 服务恢复通知</h2><p><strong>网关实例: </strong>%s</p><p><strong>服务名称: </strong>%s</p><p><strong>状态: </strong>已恢复正常</p><p><strong>时间: </strong>%s</p><hr><p style="color:#999;">服务已恢复, 无需进一步操作.</p></div>`, cfg.ID, name, time.Now().Format("2006-01-02 15:04:05")),
+				Body:    fmt.Sprintf(`<div style="font-family: Arial, sans-serif; line-height:1.6;"><h2 style="color:#188038;">✅ 服务恢复通知</h2><p><strong>网关IP: </strong>%s:%d</p><p><strong>网关实例: </strong>%s</p><p><strong>服务名称: </strong>%s</p><p><strong>状态: </strong>已恢复正常</p><p><strong>时间: </strong>%s</p><hr><p style="color:#999;">服务已恢复, 无需进一步操作.</p></div>`, cfg.IP, cfg.Port, cfg.ID, name, time.Now().Format("2006-01-02 15:04:05")),
 			})
 		}
 	}

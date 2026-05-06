@@ -3,6 +3,7 @@ package config
 // GatewayConfig 网关配置
 type GatewayConfig struct {
 	ID                   string   `yaml:"id"`
+	IP                   string   `yaml:"ip"`
 	Port                 int      `yaml:"port"`
 	EmailUsername        []string `yaml:"email-username"`
 	DataPath             string   `yaml:"data-path"`

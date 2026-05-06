@@ -2,6 +2,8 @@
 gateway:
     # 网关ID(当有多个网关时, 便于通过邮件通知区分网关)
     id: "1"
+    # 网关的IP
+    ip: "127.0.0.1"
     # 监听端口
     port: 8080
     # 邮件通知用户名
@@ -55,12 +57,14 @@ health:
     db-health-check-fail-threshold: 3
     # 数据库健康检查成功阈值
     db-health-check-ok-threshold: 1
+
     # Redis健康检查间隔(秒)
     redis-health-check-interval: 10
     # Redis健康检查失败阈值
     redis-health-check-fail-threshold: 3
     # Redis健康检查成功阈值
     redis-health-check-ok-threshold: 1
+
     # IP数据库健康检查间隔(秒)
     ipdb-health-check-interval: 20
     # IP数据库健康检查失败阈值
