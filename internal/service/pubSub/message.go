@@ -9,6 +9,7 @@ type MessageData struct {
 
 // Message 消息结构
 type Message struct {
-	Type MessageType `json:"type"`
-	Data MessageData `json:"data"`
+	Type       MessageType `json:"type"`
+	Data       MessageData `json:"data"`
+	GatewayIDs []string    `json:"gatewayIds,omitempty"`
 }

@@ -266,8 +266,10 @@ func shouldIPDBUpdate(currentFile string) bool {
 
 // UpdateIPDB 更新 IPDB
 func UpdateIPDB(wrapper *IPDB) error {
+	logger.Log.Info("开始更新 IPDB")
 	newFile, err := downloadNewIPDBVersion()
 	if err != nil {
+		logger.Log.Error("IPDB 更新失败", zap.Error(err))
 		return err
 	}
 	cfg := config.Get()
@@ -275,6 +277,7 @@ func UpdateIPDB(wrapper *IPDB) error {
 	fullPath := filepath.Join(dataPath, newFile)
 	newDB, err := ip2location.OpenDB(fullPath)
 	if err != nil {
+		logger.Log.Error("加载新 IPDB 失败", zap.Error(err))
 		return err
 	}
 	wrapper.mu.Lock()
@@ -290,6 +293,7 @@ func UpdateIPDB(wrapper *IPDB) error {
 	if oldFile != "" && oldFile != fullPath {
 		_ = os.Remove(oldFile)
 	}
+	logger.Log.Info("IPDB 更新完成", zap.String("file_path", fullPath))
 	return nil
 }
 

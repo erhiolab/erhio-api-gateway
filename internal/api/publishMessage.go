@@ -14,8 +14,9 @@ import (
 
 // publishMessageRequest 发布消息请求
 type publishMessageRequest struct {
-	Type string          `json:"type"`
-	Data json.RawMessage `json:"data"`
+	Type       string          `json:"type"`
+	Data       json.RawMessage `json:"data"`
+	GatewayIDs []string        `json:"gatewayIds"`
 }
 
 // PublishMessage 发布消息
@@ -35,7 +36,8 @@ func PublishMessage(app *app.App) http.HandlerFunc {
 		}
 		// 构建消息
 		msg := pubSub.Message{
-			Type: pubSub.MessageType(req.Type),
+			Type:       pubSub.MessageType(req.Type),
+			GatewayIDs: req.GatewayIDs,
 		}
 		// 解析data字段
 		var data pubSub.MessageData

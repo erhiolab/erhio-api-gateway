@@ -5,6 +5,7 @@ import (
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/logger"
 	"encoding/json"
+	"slices"
 
 	"go.uber.org/zap"
 )
@@ -19,11 +20,27 @@ func NewMessageHandler(app *app.App) *MessageHandler {
 	return &MessageHandler{app: app}
 }
 
+// shouldProcessMessage 判断当前网关是否应该处理该消息
+func (h *MessageHandler) shouldProcessMessage(gatewayIDs []string) bool {
+	if len(gatewayIDs) == 0 {
+		return true
+	}
+	currentGatewayID := config.Get().Gateway.ID
+	return slices.Contains(gatewayIDs, currentGatewayID)
+}
+
 // HandleMessage 处理消息
 func (h *MessageHandler) HandleMessage(message string) {
 	var msg Message
 	if err := json.Unmarshal([]byte(message), &msg); err != nil {
 		logger.Log.Error("解析消息失败", zap.Error(err))
+		return
+	}
+	if !h.shouldProcessMessage(msg.GatewayIDs) {
+		logger.Log.Debug("消息处理器: 当前网关不在目标列表中, 跳过处理",
+			zap.String("gateway_id", config.Get().Gateway.ID),
+			zap.Strings("target_gateway_ids", msg.GatewayIDs),
+		)
 		return
 	}
 	switch msg.Type {
