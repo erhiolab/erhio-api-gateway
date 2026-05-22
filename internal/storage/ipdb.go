@@ -362,11 +362,10 @@ func downloadAndVerifyOnceIPDB() (string, error) {
 		fmt.Sprintf("%s%d.zip", filePrefix, time.Now().UnixNano()),
 	)
 	tempBin := filepath.Join(tempPath, fileName)
-	url := fmt.Sprintf(
-		"https://www.ip2location.com/download/?token=%s&file=%s",
-		cfg.IPDB.Token,
-		"DB11LITEBINIPV6",
-	)
+	url := strings.ReplaceAll(strings.ReplaceAll(
+		cfg.IPDB.DownloadURL,
+		"{token}", cfg.IPDB.Token,
+	), "{file}", cfg.IPDB.FileName)
 	// 下载
 	if err := downloadIPDBFile(url, tempZip); err != nil {
 		return "", err
@@ -511,7 +510,7 @@ func validateIPDBZip(path string) error {
 	defer func(r *zip.ReadCloser) {
 		_ = r.Close()
 	}(r)
-	const targetName = "IP2LOCATION-LITE-DB11.IPV6.BIN"
+	targetName := config.Get().IPDB.ZipEntryName
 	for _, f := range r.File {
 		if strings.EqualFold(f.Name, targetName) {
 			return nil
@@ -530,7 +529,7 @@ func ipdbUnzipAndExtractBIN(srcZip, destBin string) error {
 	defer func(r *zip.ReadCloser) {
 		_ = r.Close()
 	}(r)
-	const targetName = "IP2LOCATION-LITE-DB11.IPV6.BIN"
+	targetName := config.Get().IPDB.ZipEntryName
 	for _, f := range r.File {
 		if strings.EqualFold(f.Name, targetName) {
 			rc, err := f.Open()

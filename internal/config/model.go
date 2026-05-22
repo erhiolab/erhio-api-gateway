@@ -75,6 +75,9 @@ type RedisConfig struct {
 
 // IPDBConfig IPDB配置
 type IPDBConfig struct {
+	DownloadURL         string `yaml:"download-url"`
+	FileName            string `yaml:"file-name"`
+	ZipEntryName        string `yaml:"zip-entry-name"`
 	Token               string `yaml:"token"`
 	MaxDownloadAttempts int    `yaml:"max-download-attempts"`
 }

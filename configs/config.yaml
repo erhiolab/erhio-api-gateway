@@ -128,6 +128,12 @@ redis:
 
 # IPDB
 ipdb:
+    # IPDB 下载地址 (支持 {token} 和 {file} 占位符)
+    download-url: "https://www.ip2location.com/download/?token={token}&file={file}"
+    # IPDB 文件名 (下载时使用的文件名)
+    file-name: "DB11LITEBINIPV6"
+    # ZIP 压缩包内的 BIN 文件名
+    zip-entry-name: "IP2LOCATION-LITE-DB11.IPV6.BIN"
     # IPDB 令牌
     token: "iWWtrT3GBgOpraaSA0q8nWL3TFhiE2FtsUdEKANE3wX40WW7dK4Mpt5t172nF7Me"
     # 最大下载尝试次数
