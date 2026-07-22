@@ -231,7 +231,7 @@ func RateLimit() Middleware {
 					zap.String("path", route.Path),
 					zap.String("method", route.Method),
 				)
-				utils.NotFound(w)
+				utils.NotFound(w, "路由不存在")
 				return
 			}
 			var qpmKey, qpsKey string
@@ -243,7 +243,7 @@ func RateLimit() Middleware {
 			ipLoc, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation)
 			if !ok || ipLoc == nil {
 				logger.WithRequestLogCtx(ctx).Warn("限流器插件: 客户端IP不存在")
-				utils.BadRequest(w, "empty ip")
+				utils.BadRequest(w, "客户端IP为空")
 				return
 			}
 			if apiKeyInfo.SecretID != "" {
@@ -271,7 +271,7 @@ func RateLimit() Middleware {
 						zap.String("key", qpsKey),
 						zap.Int64("limit", qpsLimit),
 					)
-					utils.TooManyRequests(w)
+					utils.TooManyRequests(w, "在一秒内请求次数超出限制")
 					return
 				}
 				select {
@@ -285,7 +285,7 @@ func RateLimit() Middleware {
 						zap.String("key", qpmKey),
 						zap.Int64("limit", qpmLimit),
 					)
-					utils.TooManyRequests(w)
+					utils.TooManyRequests(w, "在一分钟内请求次数超出限制")
 					return
 				}
 				select {

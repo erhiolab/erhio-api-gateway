@@ -13,7 +13,7 @@ func HealthCheck() Middleware {
 			deps := []string{"DB", "Redis", "IPDB"}
 			for _, dep := range deps {
 				if !healthManager.Global().IsHealthy(dep) {
-					utils.InternalServerError(w)
+					utils.InternalServerError(w, dep+"健康检查失败")
 					return
 				}
 			}

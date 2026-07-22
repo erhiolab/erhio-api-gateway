@@ -16,7 +16,7 @@ func Ping(app *app.App) http.HandlerFunc {
 		servicesCount, nodesCount, routesCount, err := app.DB.GetDashboardStats()
 		if err != nil {
 			logger.WithRequestLogCtx(ctx).Error("统计仪表盘信息错误", zap.Error(err))
-			utils.InternalServerError(w)
+			utils.InternalServerError(w, "统计仪表盘信息失败")
 			return
 		}
 		// 构建响应

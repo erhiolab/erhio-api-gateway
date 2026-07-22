@@ -24,13 +24,13 @@ func Handler(app *app.App) http.Handler {
 		selectedNode, ok := ctx.Value(utils.SelectedNodeKey).(*models.SelectedNode)
 		if !ok || selectedNode == nil || selectedNode.Node == nil {
 			logger.WithRequestLogCtx(ctx).Warn("处理请求: 未选择服务节点")
-			utils.BadGateway(w)
+			utils.BadGateway(w, "未选择服务节点")
 			return
 		}
 		service, ok := ctx.Value(utils.ServiceKey).(*models.Service)
 		if !ok || service == nil {
 			logger.WithRequestLogCtx(ctx).Warn("处理请求: 未找到服务信息")
-			utils.BadGateway(w)
+			utils.BadGateway(w, "未找到服务信息")
 			return
 		}
 		Proxy(service, selectedNode, w, r)
@@ -40,7 +40,7 @@ func Handler(app *app.App) http.Handler {
 		route, ok := ctx.Value(utils.RouteKey).(*models.Route)
 		if !ok {
 			logger.WithRequestLogCtx(ctx).Warn("处理请求: 路由不存在")
-			utils.NotFound(w)
+			utils.NotFound(w, "路由不存在")
 			return
 		}
 		mws := getOrBuildMiddleware(route, app)

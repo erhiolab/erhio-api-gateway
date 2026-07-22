@@ -20,7 +20,7 @@ func ConcurrencyLimit(app *app.App) Middleware {
 					zap.Int32("current", app.ConcurrencyLimiter.GetCurrentConcurrency()),
 					zap.Int32("max", app.ConcurrencyLimiter.GetMaxConcurrency()),
 				)
-				utils.ServerBusy(w)
+				utils.ServerBusy(w, "并发数超出限制")
 				return
 			}
 			// 释放并发许可

@@ -8,6 +8,7 @@ import (
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/service/loadBalancer"
 	"elake-api-gateway/internal/utils"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -28,7 +29,7 @@ var (
 // Proxy 代理请求, 节点失败时自动切换到其他可用节点
 func Proxy(service *models.Service, selected *models.SelectedNode, w http.ResponseWriter, r *http.Request) {
 	if service == nil || selected == nil || selected.Node == nil {
-		utils.BadGateway(w)
+		utils.BadGateway(w, "未选择服务节点")
 		return
 	}
 	resetBody, err := snapshotRequestBody(r)
@@ -38,7 +39,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 			zap.String("service_name", service.Name),
 			zap.Error(err),
 		)
-		utils.BadGateway(w)
+		utils.BadGateway(w, "无法缓存请求体")
 		return
 	}
 	cfg := config.Get()
@@ -64,7 +65,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 				zap.Duration("max_timeout", maxTotalTimeout),
 				zap.Int("tried_nodes", len(tried)),
 			)
-			utils.BadGateway(w)
+			utils.BadGateway(w, "已超时, 停止尝试更多节点")
 			return
 		}
 		tried[current.ID] = struct{}{}
@@ -75,7 +76,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 				zap.String("service_name", service.Name),
 				zap.Error(err),
 			)
-			utils.BadGateway(w)
+			utils.BadGateway(w, "无法重置请求体")
 			return
 		}
 		nodeCtx, nodeCancel := context.WithTimeout(r.Context(), nodeTimeout)
@@ -101,7 +102,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 				zap.Error(proxyErr),
 			)
 			if retryable {
-				utils.BadGateway(w)
+				utils.BadGateway(w, "上游节点不可用")
 			}
 			return
 		}
@@ -116,7 +117,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 		)
 		current = next
 	}
-	utils.BadGateway(w)
+	utils.BadGateway(w, "所有节点都不可用")
 }
 
 // proxyToNode 代理请求到目标节点
@@ -135,16 +136,36 @@ func proxyToNode(target string, w http.ResponseWriter, r *http.Request) (error, 
 				pr.Out.URL.Path = singleJoiningSlash(parseURL.Path, newPath)
 			}
 			pr.Out.URL.RawQuery = pr.In.URL.RawQuery
-			if rid, ok := pr.In.Context().Value(utils.RequestIDKey).(string); ok && rid != "" {
+			ctx := pr.In.Context()
+			// 传递 request_id
+			if rid, ok := ctx.Value(utils.RequestIDKey).(string); ok && rid != "" {
 				pr.Out.Header.Set("X-Request-ID", rid)
 			}
-			if ip, ok := pr.In.Context().Value(utils.ClientIPKey).(string); ok && ip != "" {
-				pr.Out.Header.Set("X-Real-IP", ip)
+			// 传递客户端 IP 和 IP 位置信息
+			if loc, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation); ok && loc != nil {
+				pr.Out.Header.Set("X-Real-IP", loc.IP)
 				if pr.Out.Header.Get("X-Forwarded-For") == "" {
-					pr.Out.Header.Set("X-Forwarded-For", ip)
+					pr.Out.Header.Set("X-Forwarded-For", loc.IP)
 				} else {
-					pr.Out.Header.Set("X-Forwarded-For", pr.Out.Header.Get("X-Forwarded-For")+", "+ip)
+					pr.Out.Header.Set("X-Forwarded-For", pr.Out.Header.Get("X-Forwarded-For")+", "+loc.IP)
 				}
+				pr.Out.Header.Set("G-Country-Short", loc.CountryShort)
+				pr.Out.Header.Set("G-Country-Long", loc.CountryLong)
+				pr.Out.Header.Set("G-Region", loc.Region)
+				pr.Out.Header.Set("G-City", loc.City)
+				pr.Out.Header.Set("G-Latitude", fmt.Sprintf("%f", loc.Latitude))
+				pr.Out.Header.Set("G-Longitude", fmt.Sprintf("%f", loc.Longitude))
+				pr.Out.Header.Set("G-Zipcode", loc.Zipcode)
+				pr.Out.Header.Set("G-Timezone", loc.Timezone)
+			}
+			// 传递 UserAgent 信息
+			if ua, ok := ctx.Value(utils.UserAgentKey).(*models.UserAgent); ok && ua != nil {
+				pr.Out.Header.Set("User-Agent", ua.UserAgent)
+				pr.Out.Header.Set("G-Device", ua.Device)
+			}
+			// 传递 Origin
+			if origin := pr.In.Header.Get("Origin"); origin != "" {
+				pr.Out.Header.Set("Origin", origin)
 			}
 		},
 		ErrorHandler: func(rw http.ResponseWriter, req *http.Request, err error) {

@@ -22,7 +22,7 @@ func Router(app *app.App) Middleware {
 					zap.String("path", r.URL.Path),
 					zap.Error(err),
 				)
-				utils.NotFound(w)
+				utils.NotFound(w, "服务不存在")
 				return
 			}
 			// 匹配 Route
@@ -32,7 +32,7 @@ func Router(app *app.App) Middleware {
 					zap.String("path", r.URL.Path),
 					zap.Error(err),
 				)
-				utils.NotFound(w)
+				utils.NotFound(w, "路由不存在")
 				return
 			}
 			ctx = context.WithValue(ctx, utils.ServiceKey, service)

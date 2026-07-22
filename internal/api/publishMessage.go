@@ -26,12 +26,12 @@ func PublishMessage(app *app.App) http.HandlerFunc {
 		// 解析请求体
 		var req publishMessageRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			utils.BadRequest(w, "invalid request body")
+			utils.BadRequest(w, "请求体格式错误")
 			return
 		}
 		// 验证type字段
 		if req.Type == "" {
-			utils.BadRequest(w, "type is required")
+			utils.BadRequest(w, "消息类型不能为空")
 			return
 		}
 		// 构建消息
@@ -43,7 +43,7 @@ func PublishMessage(app *app.App) http.HandlerFunc {
 		var data pubSub.MessageData
 		if len(req.Data) > 0 {
 			if err := json.Unmarshal(req.Data, &data); err != nil {
-				utils.BadRequest(w, "invalid data field")
+				utils.BadRequest(w, "数据字段格式错误")
 				return
 			}
 			msg.Data = data
@@ -56,9 +56,9 @@ func PublishMessage(app *app.App) http.HandlerFunc {
 				zap.String("type", req.Type),
 				zap.Error(err),
 			)
-			utils.InternalServerError(w)
+			utils.InternalServerError(w, "发布消息失败")
 			return
 		}
-		utils.Success(w, "success")
+		utils.Success(w, nil)
 	}
 }

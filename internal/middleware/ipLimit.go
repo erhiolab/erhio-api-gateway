@@ -20,7 +20,7 @@ func IPLimit() Middleware {
 				logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP信息不存在",
 					zap.String("ip", clientIP.IP),
 				)
-				utils.BadRequest(w, "empty ip")
+				utils.BadRequest(w, "客户端IP为空")
 				return
 			}
 			// 全局IP黑名单
@@ -29,7 +29,7 @@ func IPLimit() Middleware {
 				logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP在全局IP黑名单中, 被拒绝访问",
 					zap.String("ip", clientIP.IP),
 				)
-				utils.Forbidden(w, "IP is globally blacklisted")
+				utils.Forbidden(w, "IP被列入黑名单")
 				return
 			}
 			// 自定义IP限制
@@ -41,7 +41,7 @@ func IPLimit() Middleware {
 							logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP不在API Key白名单中, 被拒绝访问",
 								zap.String("ip", clientIP.IP),
 							)
-							utils.Forbidden(w, "IP not allowed by API Key whitelist")
+							utils.Forbidden(w, "IP不在白名单中")
 							return
 						}
 					case 2:
@@ -49,7 +49,7 @@ func IPLimit() Middleware {
 							logger.WithRequestLogCtx(ctx).Warn("IP限制器插件: 客户端IP在API Key黑名单中, 被拒绝访问",
 								zap.String("ip", clientIP.IP),
 							)
-							utils.Forbidden(w, "IP blocked by API Key blacklist")
+							utils.Forbidden(w, "IP被列入黑名单")
 							return
 						}
 					}

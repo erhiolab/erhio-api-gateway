@@ -21,7 +21,7 @@ func GetRealIP(app *app.App) Middleware {
 			ip := getClientIP(r)
 			if ip == "" {
 				logger.WithRequestLogCtx(ctx).Warn("IP解析插件: 客户端IP为空")
-				utils.BadRequest(w, "empty ip")
+				utils.BadRequest(w, "客户端IP为空")
 				return
 			}
 			rec, err := app.IPDB.GetAll(ip)
@@ -30,14 +30,14 @@ func GetRealIP(app *app.App) Middleware {
 					zap.String("ip", ip),
 					zap.Error(err),
 				)
-				utils.InternalServerError(w)
+				utils.InternalServerError(w, "解析IP失败")
 				return
 			}
 			if rec == nil {
 				logger.WithRequestLogCtx(ctx).Warn("IP解析插件: 解析失败: 未找到IP信息",
 					zap.String("ip", ip),
 				)
-				utils.BadRequest(w, "empty ip")
+				utils.BadRequest(w, "客户端IP为空")
 				return
 			}
 			var location = &models.IPLocation{

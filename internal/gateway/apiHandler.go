@@ -19,7 +19,7 @@ func APIHandler(app *app.App) http.Handler {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		logger.WithRequestLogCtx(ctx).Warn("处理请求: 路由不存在")
-		utils.NotFound(w)
+		utils.NotFound(w, "路由不存在")
 	})
 	return mux
 }

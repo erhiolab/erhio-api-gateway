@@ -22,7 +22,7 @@ func LoadBalancer() Middleware {
 					zap.Int64("service_id", service.ID),
 					zap.String("service_name", service.Name),
 				)
-				utils.BadGateway(w)
+				utils.BadGateway(w, "服务没有活动节点")
 				return
 			}
 			selectedNode := loadBalancer.SelectNode(service, nil)
@@ -31,7 +31,7 @@ func LoadBalancer() Middleware {
 					zap.Int64("service_id", service.ID),
 					zap.String("service_name", service.Name),
 				)
-				utils.BadGateway(w)
+				utils.BadGateway(w, "当前没有可用节点")
 				return
 			}
 			ctx = context.WithValue(ctx, utils.SelectedNodeKey, &models.SelectedNode{Node: selectedNode})

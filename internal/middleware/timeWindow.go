@@ -22,7 +22,7 @@ func TimeWindow() Middleware {
 			authRequirement, ok := ctx.Value(utils.AuthRequirementKey).(*models.AuthRequirement)
 			if !ok || authRequirement.Timestamp == "" {
 				logger.WithRequestLogCtx(ctx).Warn("时间窗口插件: X-Timestamp header中缺少时间戳")
-				utils.BadRequest(w, "empty X-Timestamp")
+				utils.BadRequest(w, "时间戳为空")
 				return
 			}
 			// 校验时间戳
@@ -32,7 +32,7 @@ func TimeWindow() Middleware {
 					zap.String("timestamp", authRequirement.Timestamp),
 					zap.Error(err),
 				)
-				utils.Unauthorized(w)
+				utils.Unauthorized(w, "时间戳格式错误")
 				return
 			}
 			if len(authRequirement.Timestamp) == 13 {
@@ -44,7 +44,7 @@ func TimeWindow() Middleware {
 					zap.Int64("timestamp", ts),
 					zap.Int64("window", cfg.DatabaseConfig.Auth.TimestampWindow),
 				)
-				utils.Forbidden(w, "Request expired")
+				utils.Forbidden(w, "请求过期")
 				return
 			}
 			next.ServeHTTP(w, r)

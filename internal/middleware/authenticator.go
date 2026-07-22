@@ -20,27 +20,27 @@ func Authenticator(app *app.App) Middleware {
 			authRequirement, ok := ctx.Value(utils.AuthRequirementKey).(*models.AuthRequirement)
 			if !ok {
 				logger.WithRequestLogCtx(ctx).Error("身份验证插件: 上下文中缺少认证要求")
-				utils.InternalServerError(w)
+				utils.InternalServerError(w, "上下文中缺少认证要求")
 				return
 			}
 			if authRequirement.SecretID == "" {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: Authorization header中缺少SecretID")
-				utils.BadRequest(w, "empty Authorization")
+				utils.BadRequest(w, "授权为空")
 				return
 			}
 			if authRequirement.Timestamp == "" {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Timestamp header中缺少时间戳")
-				utils.BadRequest(w, "empty X-Timestamp")
+				utils.BadRequest(w, "时间戳为空")
 				return
 			}
 			if authRequirement.Nonce == "" {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Nonce header中缺少Nonce")
-				utils.BadRequest(w, "empty X-Nonce")
+				utils.BadRequest(w, "Nonce为空")
 				return
 			}
 			if authRequirement.Signature == "" {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: X-Signature header中缺少签名")
-				utils.BadRequest(w, "empty X-Signature")
+				utils.BadRequest(w, "签名为空")
 				return
 			}
 			apiKeyInfo, ok, err := app.GetApiKeyInfo(authRequirement.SecretID)
@@ -48,7 +48,7 @@ func Authenticator(app *app.App) Middleware {
 				logger.WithRequestLogCtx(ctx).Error("身份验证插件: 上下文中缺少API密钥ID对应的API密钥信息",
 					zap.String("SecretID", authRequirement.SecretID),
 				)
-				utils.Unauthorized(w, "Invalid SecretID")
+				utils.Unauthorized(w, "API密钥无效")
 				return
 			}
 			if err != nil {
@@ -56,7 +56,7 @@ func Authenticator(app *app.App) Middleware {
 					zap.String("SecretID", authRequirement.SecretID),
 					zap.Error(err),
 				)
-				utils.InternalServerError(w)
+				utils.InternalServerError(w, "查询API密钥信息异常")
 				return
 			}
 			// 未启用API密钥, API密钥被封禁
@@ -64,7 +64,7 @@ func Authenticator(app *app.App) Middleware {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: API密钥未启用或已被封禁",
 					zap.String("SecretID", authRequirement.SecretID),
 				)
-				utils.Forbidden(w, "Key disabled or banned")
+				utils.Forbidden(w, "API密钥无效")
 				return
 			}
 			// API密钥有过期时间, 且已过期
@@ -72,7 +72,7 @@ func Authenticator(app *app.App) Middleware {
 				logger.WithRequestLogCtx(ctx).Warn("身份验证插件: API密钥已过期",
 					zap.String("SecretID", authRequirement.SecretID),
 				)
-				utils.Forbidden(w, "Key expired")
+				utils.Forbidden(w, "API密钥无效")
 				return
 			}
 			// 校验签名
@@ -89,7 +89,7 @@ func Authenticator(app *app.App) Middleware {
 					zap.String("Nonce", authRequirement.Nonce),
 					zap.String("Signature", authRequirement.Signature),
 				)
-				utils.Unauthorized(w, "Signature mismatch")
+				utils.Unauthorized(w, "签名校验失败")
 				return
 			}
 			ctx = context.WithValue(ctx, utils.ApiKeyInfoKey, apiKeyInfo)

@@ -22,12 +22,12 @@ func UniqueNonce(app *app.App) Middleware {
 			authRequirement, ok := ctx.Value(utils.AuthRequirementKey).(*models.AuthRequirement)
 			if !ok || authRequirement.SecretID == "" {
 				logger.WithRequestLogCtx(ctx).Warn("唯一性Nonce插件: Authorization header中缺少SecretID")
-				utils.BadRequest(w, "empty Authorization")
+				utils.BadRequest(w, "授权为空")
 				return
 			}
 			if authRequirement.Nonce == "" {
 				logger.WithRequestLogCtx(ctx).Warn("唯一性Nonce插件: X-Nonce header中缺少Nonce值")
-				utils.BadRequest(w, "empty X-Nonce")
+				utils.BadRequest(w, "Nonce为空")
 				return
 			}
 			nonceKey := cfg.Redis.ProjectPrefix + ":limit:nonce:" + authRequirement.SecretID + ":" + authRequirement.Nonce
@@ -37,7 +37,7 @@ func UniqueNonce(app *app.App) Middleware {
 					zap.String("nonce", authRequirement.Nonce),
 					zap.Error(err),
 				)
-				utils.InternalServerError(w)
+				utils.InternalServerError(w, "Nonce窗口异常")
 				return
 			}
 			if count > cfg.DatabaseConfig.Auth.NonceWindow {
@@ -46,7 +46,7 @@ func UniqueNonce(app *app.App) Middleware {
 					zap.Int64("count", count),
 					zap.Int64("window", cfg.DatabaseConfig.Auth.NonceWindow),
 				)
-				utils.Forbidden(w, "Nonce window exceeded")
+				utils.Forbidden(w, "Nonce窗口超出范围")
 				return
 			}
 			next.ServeHTTP(w, r)
