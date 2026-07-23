@@ -226,10 +226,8 @@ func RateLimit() Middleware {
 			cfg := config.Get()
 			route, ok := ctx.Value(utils.RouteKey).(*models.Route)
 			if !ok {
-				logger.WithRequestLogCtx(ctx).Warn("限流器插件: 路由不存在",
+				logger.WithRequestLogCtx(ctx, r).Warn("限流器插件: 路由不存在",
 					zap.Int64("route_id", route.ID),
-					zap.String("path", route.Path),
-					zap.String("method", route.Method),
 				)
 				utils.NotFound(w, "路由不存在")
 				return
@@ -242,7 +240,7 @@ func RateLimit() Middleware {
 			}
 			ipLoc, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation)
 			if !ok || ipLoc == nil {
-				logger.WithRequestLogCtx(ctx).Warn("限流器插件: 客户端IP不存在")
+				logger.WithRequestLogCtx(ctx, r).Warn("限流器插件: 客户端IP不存在")
 				utils.BadRequest(w, "客户端IP为空")
 				return
 			}
@@ -267,7 +265,7 @@ func RateLimit() Middleware {
 			}
 			if qpsLimit > 0 {
 				if !globalRateLimiter.checkQPS(qpsKey, qpsLimit) {
-					logger.WithRequestLogCtx(ctx).Warn("限流器插件: QPS限制超出",
+					logger.WithRequestLogCtx(ctx, r).Warn("限流器插件: QPS限制超出",
 						zap.String("key", qpsKey),
 						zap.Int64("limit", qpsLimit),
 					)
@@ -281,7 +279,7 @@ func RateLimit() Middleware {
 			}
 			if qpmLimit > 0 {
 				if !globalTokenBucket.checkQPM(qpmKey, qpmLimit) {
-					logger.WithRequestLogCtx(ctx).Warn("限流器插件: QPM限制超出",
+					logger.WithRequestLogCtx(ctx, r).Warn("限流器插件: QPM限制超出",
 						zap.String("key", qpmKey),
 						zap.Int64("limit", qpmLimit),
 					)

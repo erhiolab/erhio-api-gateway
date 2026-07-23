@@ -13,4 +13,5 @@ type Route struct {
 	Enabled      bool   `db:"enabled"`
 	IpLimit      bool   `db:"ip_limit"`
 	CountryLimit bool   `db:"country_limit"`
+	DomainLimit  bool   `db:"domain_limit"`
 }

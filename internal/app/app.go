@@ -34,7 +34,7 @@ func New() *App {
 	return a
 }
 
-// GetRedisClient 获取底层 Redis 客户端(用于 Pipeline 等高级操作)
+// GetRedisClient 获取底层 Redis 客户端 (用于 Pipeline 等高级操作)
 func GetRedisClient() *redis.Client {
 	if globalApp == nil || globalApp.Redis == nil {
 		return nil

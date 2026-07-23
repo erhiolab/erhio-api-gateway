@@ -18,7 +18,7 @@ func LoadBalancer() Middleware {
 			ctx := r.Context()
 			service, ok := ctx.Value(utils.ServiceKey).(*models.Service)
 			if !ok || service == nil || len(service.Nodes) == 0 {
-				logger.WithRequestLogCtx(ctx).Warn("负载均衡插件: 服务没有活动节点",
+				logger.WithRequestLogCtx(ctx, r).Warn("负载均衡插件: 服务没有活动节点",
 					zap.Int64("service_id", service.ID),
 					zap.String("service_name", service.Name),
 				)
@@ -27,7 +27,7 @@ func LoadBalancer() Middleware {
 			}
 			selectedNode := loadBalancer.SelectNode(service, nil)
 			if selectedNode == nil {
-				logger.WithRequestLogCtx(ctx).Warn("负载均衡插件: 当前没有可用节点",
+				logger.WithRequestLogCtx(ctx, r).Warn("负载均衡插件: 当前没有可用节点",
 					zap.Int64("service_id", service.ID),
 					zap.String("service_name", service.Name),
 				)

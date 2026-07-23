@@ -14,4 +14,6 @@ const (
 	MessageTypeClearServiceCache MessageType = "clear_service_cache"
 	// MessageTypeClearRouteCache 清除路由缓存
 	MessageTypeClearRouteCache MessageType = "clear_route_cache"
+	// MessageTypeClearBlacklistCache 清除黑名单缓存
+	MessageTypeClearBlacklistCache MessageType = "clear_blacklist_cache"
 )

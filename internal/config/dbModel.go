@@ -23,12 +23,10 @@ type EmailConfig struct {
 
 // AuthConfig 认证配置
 type AuthConfig struct {
-	MasterKey        string   `yaml:"master-key"`
-	TimestampWindow  int64    `yaml:"timestamp-window"`
-	NonceWindow      int64    `yaml:"nonce-window"`
-	NonceWindowHour  int64    `yaml:"nonce-window-hour"`
-	QpsLimit         int64    `yaml:"qps-limit"`
-	QpmLimit         int64    `yaml:"qpm-limit"`
-	IPBlacklist      []string `yaml:"ip-black-list"`
-	CountryBlackList []string `yaml:"country-black-list"`
+	MasterKey       string `yaml:"master-key"`
+	TimestampWindow int64  `yaml:"timestamp-window"`
+	NonceWindow     int64  `yaml:"nonce-window"`
+	NonceWindowHour int64  `yaml:"nonce-window-hour"`
+	QpsLimit        int64  `yaml:"qps-limit"`
+	QpmLimit        int64  `yaml:"qpm-limit"`
 }

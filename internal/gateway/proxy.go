@@ -34,7 +34,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 	}
 	resetBody, err := snapshotRequestBody(r)
 	if err != nil {
-		logger.WithRequestLogCtx(r.Context()).Error("代理请求: 无法缓存请求体",
+		logger.WithRequestLogCtx(r.Context(), r).Error("代理请求: 无法缓存请求体",
 			zap.Int64("service_id", service.ID),
 			zap.String("service_name", service.Name),
 			zap.Error(err),
@@ -58,7 +58,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 	current := selected.Node
 	for current != nil {
 		if time.Since(startTime) > maxTotalTimeout {
-			logger.WithRequestLogCtx(r.Context()).Warn("代理请求: 总超时限制, 停止尝试更多节点",
+			logger.WithRequestLogCtx(r.Context(), r).Warn("代理请求: 总超时限制, 停止尝试更多节点",
 				zap.Int64("service_id", service.ID),
 				zap.String("service_name", service.Name),
 				zap.Duration("elapsed", time.Since(startTime)),
@@ -71,7 +71,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 		tried[current.ID] = struct{}{}
 		selected.Node = current
 		if err := resetBody(); err != nil {
-			logger.WithRequestLogCtx(r.Context()).Error("代理请求: 无法重置请求体",
+			logger.WithRequestLogCtx(r.Context(), r).Error("代理请求: 无法重置请求体",
 				zap.Int64("service_id", service.ID),
 				zap.String("service_name", service.Name),
 				zap.Error(err),
@@ -94,7 +94,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 		}
 		next := loadBalancer.SelectNode(service, tried)
 		if !retryable || next == nil {
-			logger.WithRequestLogCtx(r.Context()).Warn("代理请求: 上游节点不可用",
+			logger.WithRequestLogCtx(r.Context(), r).Warn("代理请求: 上游节点不可用",
 				zap.Int64("service_id", service.ID),
 				zap.String("service_name", service.Name),
 				zap.Int64("node_id", current.ID),
@@ -106,7 +106,7 @@ func Proxy(service *models.Service, selected *models.SelectedNode, w http.Respon
 			}
 			return
 		}
-		logger.WithRequestLogCtx(r.Context()).Warn("代理请求: 上游节点异常, 自动切换",
+		logger.WithRequestLogCtx(r.Context(), r).Warn("代理请求: 上游节点异常, 自动切换",
 			zap.Int64("service_id", service.ID),
 			zap.String("service_name", service.Name),
 			zap.Int64("from_node_id", current.ID),

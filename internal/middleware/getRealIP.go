@@ -6,9 +6,7 @@ import (
 	"elake-api-gateway/internal/logger"
 	"elake-api-gateway/internal/models"
 	"elake-api-gateway/internal/utils"
-	"net"
 	"net/http"
-	"strings"
 
 	"go.uber.org/zap"
 )
@@ -18,15 +16,15 @@ func GetRealIP(app *app.App) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			ip := getClientIP(r)
+			ip := utils.GetClientIP(r)
 			if ip == "" {
-				logger.WithRequestLogCtx(ctx).Warn("IP解析插件: 客户端IP为空")
+				logger.WithRequestLogCtx(ctx, r).Warn("IP解析插件: 客户端IP为空")
 				utils.BadRequest(w, "客户端IP为空")
 				return
 			}
 			rec, err := app.IPDB.GetAll(ip)
 			if err != nil {
-				logger.WithRequestLogCtx(ctx).Error("IP解析插件: 解析失败",
+				logger.WithRequestLogCtx(ctx, r).Error("IP解析插件: 解析失败",
 					zap.String("ip", ip),
 					zap.Error(err),
 				)
@@ -34,7 +32,7 @@ func GetRealIP(app *app.App) Middleware {
 				return
 			}
 			if rec == nil {
-				logger.WithRequestLogCtx(ctx).Warn("IP解析插件: 解析失败: 未找到IP信息",
+				logger.WithRequestLogCtx(ctx, r).Warn("IP解析插件: 解析失败: 未找到IP信息",
 					zap.String("ip", ip),
 				)
 				utils.BadRequest(w, "客户端IP为空")
@@ -63,33 +61,4 @@ func GetRealIP(app *app.App) Middleware {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
-}
-
-// getClientIP 获取客户端 IP 地址
-func getClientIP(r *http.Request) string {
-	// X-Forwarded-For
-	if xff := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); xff != "" {
-		parts := strings.Split(xff, ",")
-		for _, part := range parts {
-			ip := strings.TrimSpace(part)
-			if parsed := net.ParseIP(ip); parsed != nil {
-				return parsed.String()
-			}
-		}
-	}
-
-	// X-Real-IP
-	if ip := strings.TrimSpace(r.Header.Get("X-Real-IP")); ip != "" {
-		if parsed := net.ParseIP(ip); parsed != nil {
-			return parsed.String()
-		}
-	}
-	// RemoteAddr
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err == nil {
-		if parsed := net.ParseIP(host); parsed != nil {
-			return parsed.String()
-		}
-	}
-	return ""
 }

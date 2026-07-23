@@ -18,8 +18,7 @@ func Router(app *app.App) Middleware {
 			// 匹配 Service
 			service, newPath, err := app.MatchService(r.URL.Path)
 			if err != nil || service == nil || len(service.Nodes) == 0 {
-				logger.WithRequestLogCtx(ctx).Warn("路由插件: 服务未找到",
-					zap.String("path", r.URL.Path),
+				logger.WithRequestLogCtx(ctx, r).Warn("路由插件: 服务未找到",
 					zap.Error(err),
 				)
 				utils.NotFound(w, "服务不存在")
@@ -28,8 +27,7 @@ func Router(app *app.App) Middleware {
 			// 匹配 Route
 			route, err := app.MatchRoute(service.ID, newPath, r.Method)
 			if err != nil || route == nil || !route.Enabled {
-				logger.WithRequestLogCtx(ctx).Warn("路由插件: 路由未找到",
-					zap.String("path", r.URL.Path),
+				logger.WithRequestLogCtx(ctx, r).Warn("路由插件: 路由未找到",
 					zap.Error(err),
 				)
 				utils.NotFound(w, "路由不存在")

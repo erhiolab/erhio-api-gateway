@@ -10,8 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// Logging 日志插件
-func Logging() Middleware {
+// RequestLogging 请求日志插件
+func RequestLogging() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -38,7 +38,7 @@ func Logging() Middleware {
 			duration := time.Since(start)
 			durationNs := duration.Nanoseconds()
 			responseSize := int64(wrapped.Size)
-			logger.WithRequestLogCtx(ctx).Info("HTTP请求",
+			logger.WithRequestLogCtx(ctx, r).Info("HTTP请求",
 				zap.Int64("serviceID", node.ServiceID),
 				zap.Int64("nodeID", node.ID),
 				zap.Any("clientIP", clientIP),

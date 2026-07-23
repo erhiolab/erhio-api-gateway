@@ -26,10 +26,12 @@ func initRoutes(app *app.App) {
 		middleware.ConcurrencyLimit(app),
 		middleware.GetRealIP(app),
 		middleware.GetUserAgent(),
+		middleware.GlobalBlacklist(app),
+		middleware.SecurityFilter(app),
 		middleware.Router(app),
 		middleware.LoadBalancer(),
 		middleware.RateLimit(),
-		middleware.Logging(),
+		middleware.RequestLogging(),
 	)
 	http.Handle("/", proxyHandler)
 }
@@ -49,7 +51,9 @@ func initAPI(app *app.App, cfg *config.Config) {
 		middleware.ConcurrencyLimit(app),
 		middleware.GetRealIP(app),
 		middleware.GetUserAgent(),
-		middleware.Logging(),
+		middleware.GlobalBlacklist(app),
+		middleware.SecurityFilter(app),
+		middleware.RequestLogging(),
 	)
 	http.Handle(apiRoot+"/", http.StripPrefix(apiRoot, apiMiddleware))
 	logger.Log.Info("网关API根路由: ", zap.String("api-root", apiRoot))

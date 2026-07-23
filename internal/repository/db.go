@@ -32,7 +32,7 @@ func (db *DBManager) GetApiKeyInfo(secretID string) (*models.APIKeyInfo, bool, e
 	var apiKey models.APIKeyInfo
 	query := `SELECT id, user_id, secret_id, secret_key, service_id,
        				qps, qpm, ip_filter_type, ip_list, country_filter_type,
-       				country_list, enabled, banned, expires_at
+       				country_list, domain_filter_type, domain_list, enabled, banned, expires_at
 			  FROM api_keys
 			  WHERE secret_id = ?`
 	err := db.db.GetContext(ctx, &apiKey, query, secretID)
@@ -61,6 +61,11 @@ func (db *DBManager) GetApiKeyInfo(secretID string) (*models.APIKeyInfo, bool, e
 	} else {
 		apiKey.CountryList = []string{}
 	}
+	if apiKey.RawDomainList != nil && *apiKey.RawDomainList != "" {
+		apiKey.DomainList = strings.Split(strings.TrimSpace(*apiKey.RawDomainList), "\n")
+	} else {
+		apiKey.DomainList = []string{}
+	}
 	return &apiKey, true, nil
 }
 
@@ -86,8 +91,8 @@ func (db *DBManager) GetRouteByID(routeID int64) (*models.Route, bool, error) {
 	defer cancel()
 
 	var route models.Route
-	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.ip_limit, r.country_limit, r.qps, r.qpm, r.enabled
-              FROM routes r 
+	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.ip_limit, r.country_limit, r.domain_limit, r.qps, r.qpm, r.enabled
+              FROM routes r
               JOIN services s ON r.service_id = s.id
               WHERE r.id = ?`
 	err := db.db.GetContext(ctx, &route, query, routeID)
@@ -170,8 +175,8 @@ func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
 	defer cancel()
 	var dbRoutes []models.Route
-	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.ip_limit, r.country_limit, r.qps, r.qpm, r.enabled
-              FROM routes r 
+	query := `SELECT r.id, r.path, r.method, r.service_id, s.name as service_name, r.require_auth, r.ip_limit, r.country_limit, r.domain_limit, r.qps, r.qpm, r.enabled
+              FROM routes r
               JOIN services s ON r.service_id = s.id`
 	err := db.db.SelectContext(ctx, &dbRoutes, query)
 	if err != nil {
@@ -189,12 +194,57 @@ func (db *DBManager) GetAllRoutes() ([]models.Route, error) {
 			RequireAuth:  dbRoute.RequireAuth,
 			IpLimit:      dbRoute.IpLimit,
 			CountryLimit: dbRoute.CountryLimit,
+			DomainLimit:  dbRoute.DomainLimit,
 			QPS:          dbRoute.QPS,
 			QPM:          dbRoute.QPM,
 			Enabled:      dbRoute.Enabled,
 		})
 	}
 	return routes, nil
+}
+
+// GetBlacklistByType 根据类型获取黑名单列表
+func (db *DBManager) GetBlacklistByType(blacklistType string) ([]models.Blacklist, error) {
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
+	defer cancel()
+	var blacklists []models.Blacklist
+	query := `SELECT id, type, value, description FROM api_gateway_blacklist WHERE type = ?`
+	err := db.db.SelectContext(ctx, &blacklists, query, blacklistType)
+	if err != nil {
+		logger.Log.Error("查询黑名单列表错误", zap.String("type", blacklistType), zap.Error(err))
+		return nil, err
+	}
+	return blacklists, nil
+}
+
+// GetAllBlacklist 获取所有黑名单
+func (db *DBManager) GetAllBlacklist() ([]models.Blacklist, error) {
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.ReadTimeout)*time.Second)
+	defer cancel()
+	var blacklists []models.Blacklist
+	query := `SELECT id, type, value, description FROM api_gateway_blacklist`
+	err := db.db.SelectContext(ctx, &blacklists, query)
+	if err != nil {
+		logger.Log.Error("查询所有黑名单错误", zap.Error(err))
+		return nil, err
+	}
+	return blacklists, nil
+}
+
+// InsertBlacklist 插入黑名单记录
+func (db *DBManager) InsertBlacklist(blacklist *models.Blacklist) error {
+	cfg := config.Get()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.WriteTimeout)*time.Second)
+	defer cancel()
+	query := `INSERT INTO api_gateway_blacklist (id, type, value, description) VALUES (?, ?, ?, ?)`
+	_, err := db.db.ExecContext(ctx, query, blacklist.ID, blacklist.Type, blacklist.Value, blacklist.Description)
+	if err != nil {
+		logger.Log.Error("插入黑名单错误", zap.String("type", blacklist.Type), zap.String("value", blacklist.Value), zap.Error(err))
+		return err
+	}
+	return nil
 }
 
 // GetDashboardStats 获取所有统计信息

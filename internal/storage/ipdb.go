@@ -475,7 +475,7 @@ func isIPDBDNSError(err error) bool {
 	return strings.Contains(err.Error(), "no such host") || strings.Contains(err.Error(), "Temporary failure in name resolution")
 }
 
-// isIPDBDownloadLimitError 检查下载的文件是否是HTML错误页面(下载次数限制)
+// isIPDBDownloadLimitError 检查下载的文件是否是HTML错误页面 (下载次数限制)
 func isIPDBDownloadLimitError(path string) (bool, error) {
 	// 读取文件前几个字节检查是否是HTML
 	data, err := os.ReadFile(path)

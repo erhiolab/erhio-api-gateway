@@ -23,13 +23,13 @@ func Handler(app *app.App) http.Handler {
 		ctx := r.Context()
 		selectedNode, ok := ctx.Value(utils.SelectedNodeKey).(*models.SelectedNode)
 		if !ok || selectedNode == nil || selectedNode.Node == nil {
-			logger.WithRequestLogCtx(ctx).Warn("处理请求: 未选择服务节点")
+			logger.WithRequestLogCtx(ctx, r).Warn("处理请求: 未选择服务节点")
 			utils.BadGateway(w, "未选择服务节点")
 			return
 		}
 		service, ok := ctx.Value(utils.ServiceKey).(*models.Service)
 		if !ok || service == nil {
-			logger.WithRequestLogCtx(ctx).Warn("处理请求: 未找到服务信息")
+			logger.WithRequestLogCtx(ctx, r).Warn("处理请求: 未找到服务信息")
 			utils.BadGateway(w, "未找到服务信息")
 			return
 		}
@@ -39,7 +39,7 @@ func Handler(app *app.App) http.Handler {
 		ctx := r.Context()
 		route, ok := ctx.Value(utils.RouteKey).(*models.Route)
 		if !ok {
-			logger.WithRequestLogCtx(ctx).Warn("处理请求: 路由不存在")
+			logger.WithRequestLogCtx(ctx, r).Warn("处理请求: 路由不存在")
 			utils.NotFound(w, "路由不存在")
 			return
 		}
@@ -51,10 +51,11 @@ func Handler(app *app.App) http.Handler {
 
 // buildMiddlewareCacheKey 构建中间件缓存键
 func buildMiddlewareCacheKey(route *models.Route) string {
-	return fmt.Sprintf("%d:a%d:i%d:c%d", route.ID,
+	return fmt.Sprintf("%d:a%d:i%d:c%d:d%d", route.ID,
 		boolToInt(route.RequireAuth),
 		boolToInt(route.IpLimit),
-		boolToInt(route.CountryLimit))
+		boolToInt(route.CountryLimit),
+		boolToInt(route.DomainLimit))
 }
 
 func boolToInt(b bool) int {
@@ -104,6 +105,9 @@ func build(route *models.Route, app *app.App) []middleware.Middleware {
 	}
 	if route.CountryLimit {
 		mws = append(mws, middleware.CountryLimit())
+	}
+	if route.DomainLimit {
+		mws = append(mws, middleware.DomainLimit())
 	}
 	return mws
 }

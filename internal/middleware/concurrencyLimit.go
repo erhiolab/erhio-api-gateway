@@ -16,7 +16,7 @@ func ConcurrencyLimit(app *app.App) Middleware {
 			ctx := r.Context()
 			// 尝试获取并发许可
 			if !app.ConcurrencyLimiter.Acquire() {
-				logger.WithRequestLogCtx(ctx).Warn("并发数超出限制",
+				logger.WithRequestLogCtx(ctx, r).Warn("并发数超出限制",
 					zap.Int32("current", app.ConcurrencyLimiter.GetCurrentConcurrency()),
 					zap.Int32("max", app.ConcurrencyLimiter.GetMaxConcurrency()),
 				)

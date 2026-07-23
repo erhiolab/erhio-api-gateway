@@ -7,13 +7,26 @@ DROP TABLE IF EXISTS `api_gateway_config`;
 CREATE TABLE api_gateway_config
 (
 	id          VARCHAR(255) PRIMARY KEY COMMENT '配置ID',
-	group_name  VARCHAR(64)                            NOT NULL COMMENT '配置分组',
+	group_name  VARCHAR(64)                                     NOT NULL COMMENT '配置分组',
 	type        ENUM ('string', 'int', 'float', 'bool', 'json') NOT NULL COMMENT '类型',
 	value       TEXT COMMENT '配置值',
 	title       VARCHAR(255) DEFAULT NULL COMMENT '配置标题',
 	description VARCHAR(255) DEFAULT NULL COMMENT '配置说明',
 	version     INT          DEFAULT 1 COMMENT '版本号',
 	updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ----------------------------
+-- 全局黑名单 (api_gateway_blacklist)
+-- ----------------------------
+DROP TABLE IF EXISTS `api_gateway_blacklist`;
+CREATE TABLE api_gateway_blacklist
+(
+	id          VARCHAR(255) PRIMARY KEY COMMENT '黑名单ID',
+	type        ENUM ('ip', 'domain', 'country') NOT NULL COMMENT '黑名单类型',
+	value       TEXT COMMENT '黑名单值',
+	description VARCHAR(255) DEFAULT NULL COMMENT '黑名单说明',
+	created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- ----------------------------
@@ -65,6 +78,8 @@ CREATE TABLE api_keys
 	ip_list             TEXT COMMENT 'IP 列表, 每个 IP 一行',
 	country_filter_type TINYINT               DEFAULT 0 COMMENT '国家 过滤类型: 0关闭, 1白名单, 2黑名单',
 	country_list        TEXT COMMENT '国家 列表, 每个国家一行',
+	domain_filter_type  TINYINT               DEFAULT 0 COMMENT '域名 过滤类型: 0关闭, 1白名单, 2黑名单',
+	domain_list         TEXT COMMENT '域名 列表, 每个域名一行',
 	enabled             TINYINT               DEFAULT 1 COMMENT '是否启用: 0关闭, 1开启',
 	banned              TINYINT      NOT NULL DEFAULT 0 COMMENT '封禁状态: 0正常, 1永久封禁, 2临时封禁, 3注销中',
 	banned_start        TIMESTAMP    NULL     DEFAULT NULL COMMENT '封禁开始时间',
@@ -137,6 +152,7 @@ CREATE TABLE routes
 	require_auth  BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要认证',
 	ip_limit      BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要 IP 限流',
 	country_limit BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要国家限流',
+	domain_limit  BOOLEAN                                                           NOT NULL DEFAULT FALSE COMMENT '是否需要域名限流',
 	qps           INT                                                                        DEFAULT 0 COMMENT '请求每秒限制',
 	qpm           INT                                                                        DEFAULT 0 COMMENT '请求每分钟限制',
 	enabled       TINYINT                                                                    DEFAULT 1 COMMENT '是否启用: 0关闭, 1开启',
@@ -185,31 +201,32 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- 网关配置
 INSERT INTO api_gateway_config (id, group_name, type, value, title, description, version)
-VALUES
-	('gateway.local-cache-expire', 'gateway', 'int', '10', '本地缓存过期时间(分钟)', '默认10分钟, 用于存储本地缓存', 1),
-	('gateway.redis-cache-expire', 'gateway', 'int', '60', 'Redis缓存过期时间(分钟)', '默认60分钟, 用于存储Redis缓存', 1),
-	('gateway.api-root', 'gateway', 'string', '/_gateway/api', '网关API根路由', '默认/_gateway/api, 用于访问网关自身的API接口', 1),
-	('gateway.node-timeout', 'gateway', 'int', '3', '节点超时时间(秒)', '默认3秒, 代理到单个节点的超时时间', 1),
-	('gateway.total-timeout', 'gateway', 'int', '10', '总超时时间(秒)', '默认10秒, 遍历所有节点的总超时限制', 1);
+VALUES ('gateway.local-cache-expire', 'gateway', 'int', '10', '本地缓存过期时间(分钟)', '默认10分钟, 用于存储本地缓存',
+		1),
+	   ('gateway.redis-cache-expire', 'gateway', 'int', '60', 'Redis缓存过期时间(分钟)',
+		'默认60分钟, 用于存储Redis缓存', 1),
+	   ('gateway.api-root', 'gateway', 'string', '/_gateway/api', '网关API根路由',
+		'默认/_gateway/api, 用于访问网关自身的API接口', 1),
+	   ('gateway.node-timeout', 'gateway', 'int', '3', '节点超时时间(秒)', '默认3秒, 代理到单个节点的超时时间', 1),
+	   ('gateway.total-timeout', 'gateway', 'int', '10', '总超时时间(秒)', '默认10秒, 遍历所有节点的总超时限制', 1);
 
 -- Email配置
 INSERT INTO api_gateway_config (id, group_name, type, value, title, description, version)
-VALUES
-	('email.host', 'email', 'string', 'smtp.qq.com', 'SMTP主机地址', '用于发送邮件的SMTP主机地址', 1),
-	('email.port', 'email', 'int', '587', 'SMTP主机端口', '用于发送邮件的SMTP主机端口', 1),
-	('email.username', 'email', 'string', '2444236088@qq.com', 'SMTP用户名', '用于发送邮件的SMTP用户名/邮箱', 1),
-	('email.password', 'email', 'string', 'tgaiwyfrofceeacd', 'SMTP密码', '用于发送邮件的SMTP密码', 1),
-	('email.timeout', 'email', 'int', '10', 'SMTP超时时间(秒)', '用于发送邮件的SMTP超时时间', 1),
-	('email.max-retry', 'email', 'int', '3', '最大重试次数', '用于发送邮件的最大重试次数', 1);
+VALUES ('email.host', 'email', 'string', 'smtp.qq.com', 'SMTP主机地址', '用于发送邮件的SMTP主机地址', 1),
+	   ('email.port', 'email', 'int', '587', 'SMTP主机端口', '用于发送邮件的SMTP主机端口', 1),
+	   ('email.username', 'email', 'string', '2444236088@qq.com', 'SMTP用户名', '用于发送邮件的SMTP用户名/邮箱', 1),
+	   ('email.password', 'email', 'string', 'tgaiwyfrofceeacd', 'SMTP密码', '用于发送邮件的SMTP密码', 1),
+	   ('email.timeout', 'email', 'int', '10', 'SMTP超时时间(秒)', '用于发送邮件的SMTP超时时间', 1),
+	   ('email.max-retry', 'email', 'int', '3', '最大重试次数', '用于发送邮件的最大重试次数', 1);
 
 -- 认证配置
 INSERT INTO api_gateway_config (id, group_name, type, value, title, description, version)
-VALUES
-	('auth.master-key', 'auth', 'string', 'b8757330c18fe65a8ce7b0733355e292', '加密密钥', '用于加密和解密请求体的密钥', 1),
-	('auth.timestamp-window', 'auth', 'int', '5', '时间戳窗口(秒)', '默认5秒, 用于校验请求时间戳是否在5秒内', 1),
-	('auth.nonce-window', 'auth', 'int', '2', 'nonce 唯一性校验窗口(次)', '默认2次, 用于校验请求nonce是否在2次内', 1),
-	('auth.nonce-window-hour', 'auth', 'int', '24', 'nonce 唯一性校验窗口(小时)', '默认24小时, 用于校验请求nonce是否在24小时内', 1),
-	('auth.qps-limit', 'auth', 'int', '5', '每秒最大请求数', '默认5次, 用于限制每秒请求数', 1),
-	('auth.qpm-limit', 'auth', 'int', '150', '每分钟最大请求数', '默认150次, 用于限制每分钟请求数', 1),
-	('auth.ip-black-list', 'auth', 'string', '', '全局IP黑名单', '用于限制访问的IP地址, 格式为IP地址列表, 每行一个IP地址', 1),
-	('auth.country-black-list', 'auth', 'string', '', '全局国家黑名单', '用于限制访问的国家, 格式为国家列表, 每一行一个国家', 1);
+VALUES ('auth.master-key', 'auth', 'string', 'b8757330c18fe65a8ce7b0733355e292', '加密密钥',
+		'用于加密和解密请求体的密钥', 1),
+	   ('auth.timestamp-window', 'auth', 'int', '5', '时间戳窗口(秒)', '默认5秒, 用于校验请求时间戳是否在5秒内', 1),
+	   ('auth.nonce-window', 'auth', 'int', '2', 'nonce 唯一性校验窗口(次)', '默认2次, 用于校验请求nonce是否在2次内',
+		1),
+	   ('auth.nonce-window-hour', 'auth', 'int', '24', 'nonce 唯一性校验窗口(小时)',
+		'默认24小时, 用于校验请求nonce是否在24小时内', 1),
+	   ('auth.qps-limit', 'auth', 'int', '5', '每秒最大请求数', '默认5次, 用于限制每秒请求数', 1),
+	   ('auth.qpm-limit', 'auth', 'int', '150', '每分钟最大请求数', '默认150次, 用于限制每分钟请求数', 1);

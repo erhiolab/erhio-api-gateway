@@ -2,9 +2,10 @@ package pubSub
 
 // MessageData 消息数据
 type MessageData struct {
-	SecretID  string `json:"secretId,omitempty"`
-	ServiceID int64  `json:"serviceId,omitempty"`
-	RouteID   int64  `json:"routeId,omitempty"`
+	SecretID      string `json:"secretId,omitempty"`
+	ServiceID     int64  `json:"serviceId,omitempty"`
+	RouteID       int64  `json:"routeId,omitempty"`
+	BlacklistType string `json:"blacklistType,omitempty"`
 }
 
 // Message 消息结构

@@ -18,6 +18,9 @@ type APIKeyInfo struct {
 	CountryFilterType int        `json:"country_filter_type" db:"country_filter_type"`
 	RawCountryList    *string    `json:"-" db:"country_list"`
 	CountryList       []string   `json:"country_list" db:"-"`
+	DomainFilterType  int        `json:"domain_filter_type" db:"domain_filter_type"`
+	RawDomainList     *string    `json:"-" db:"domain_list"`
+	DomainList        []string   `json:"domain_list" db:"-"`
 	Enabled           bool       `json:"enabled" db:"enabled"`
 	Banned            int64      `json:"banned" db:"banned"`
 	ExpiresAt         *time.Time `json:"expires_at" db:"expires_at"`

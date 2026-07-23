@@ -54,6 +54,8 @@ func (h *MessageHandler) HandleMessage(message string) {
 		h.handleClearServiceCache(msg)
 	case MessageTypeClearRouteCache:
 		h.handleClearRouteCache(msg)
+	case MessageTypeClearBlacklistCache:
+		h.handleClearBlacklistCache(msg)
 	default:
 		logger.Log.Warn("消息处理器: 未知消息类型", zap.String("type", string(msg.Type)))
 	}
@@ -126,6 +128,22 @@ func (h *MessageHandler) handleClearRouteCache(msg Message) {
 	if err != nil {
 		logger.Log.Error("消息处理器: 清除路由缓存失败",
 			zap.Int64("route_id", msg.Data.RouteID),
+			zap.Error(err),
+		)
+	}
+}
+
+// handleClearBlacklistCache 处理清除黑名单缓存消息
+func (h *MessageHandler) handleClearBlacklistCache(msg Message) {
+	var err error
+	if msg.Data.BlacklistType == "" {
+		err = h.app.ClearAllBlacklistCache()
+	} else {
+		err = h.app.ClearBlacklistCache(msg.Data.BlacklistType)
+	}
+	if err != nil {
+		logger.Log.Error("消息处理器: 清除黑名单缓存失败",
+			zap.String("blacklist_type", msg.Data.BlacklistType),
 			zap.Error(err),
 		)
 	}

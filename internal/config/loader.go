@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -150,18 +149,6 @@ func LoadDatabaseConfig(db *sqlx.DB) (*DatabaseConfig, error) {
 	if val, ok := configMap["auth.qpm-limit"]; ok {
 		if limit, err := strconv.ParseInt(val, 10, 64); err == nil {
 			authConfig.QpmLimit = limit
-		}
-	}
-	// 全局IP黑名单
-	if val, ok := configMap["auth.ip-black-list"]; ok {
-		if val != "" {
-			authConfig.IPBlacklist = strings.Split(strings.TrimSpace(val), "\n")
-		}
-	}
-	// 全局国家黑名单
-	if val, ok := configMap["auth.country-black-list"]; ok {
-		if val != "" {
-			authConfig.CountryBlackList = strings.Split(strings.TrimSpace(val), "\n")
 		}
 	}
 	dbConfig.Auth = authConfig

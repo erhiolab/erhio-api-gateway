@@ -1,4 +1,4 @@
-package api
+package controller
 
 import (
 	"elake-api-gateway/internal/app"
@@ -15,7 +15,7 @@ func Ping(app *app.App) http.HandlerFunc {
 		ctx := r.Context()
 		servicesCount, nodesCount, routesCount, err := app.DB.GetDashboardStats()
 		if err != nil {
-			logger.WithRequestLogCtx(ctx).Error("统计仪表盘信息错误", zap.Error(err))
+			logger.WithRequestLogCtx(ctx, r).Error("统计仪表盘信息错误", zap.Error(err))
 			utils.InternalServerError(w, "统计仪表盘信息失败")
 			return
 		}

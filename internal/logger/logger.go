@@ -4,6 +4,7 @@ import (
 	"context"
 	"elake-api-gateway/internal/config"
 	"elake-api-gateway/internal/utils"
+	"net/http"
 	"os"
 
 	"go.uber.org/zap"
@@ -82,13 +83,19 @@ func parseLevel(level string) zapcore.Level {
 }
 
 // WithRequestLogCtx 从 context 中获取 requestID 并添加到日志中
-func WithRequestLogCtx(ctx context.Context) *zap.Logger {
+func WithRequestLogCtx(ctx context.Context, r *http.Request) *zap.Logger {
 	if ctx == nil {
 		return RequestLog
 	}
 	// 从 context 中获取 requestID
 	if id, ok := ctx.Value(utils.RequestIDKey).(string); ok {
-		return RequestLog.With(zap.String("request_id", id))
+		return RequestLog.With(
+			zap.String("request_id", id),
+			zap.String("path", r.URL.Path),
+			zap.String("method", r.Method),
+			zap.String("ip", utils.GetClientIP(r)),
+			zap.String("ua", r.UserAgent()),
+		)
 	}
 	return RequestLog
 }

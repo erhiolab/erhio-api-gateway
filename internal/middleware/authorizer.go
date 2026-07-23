@@ -14,18 +14,18 @@ func Authorizer() Middleware {
 			ctx := r.Context()
 			apiKeyInfo, ok := ctx.Value(utils.ApiKeyInfoKey).(*models.APIKeyInfo)
 			if !ok {
-				logger.WithRequestLogCtx(ctx).Error("鉴权插件: 上下文中缺少API密钥信息")
+				logger.WithRequestLogCtx(ctx, r).Error("鉴权插件: 上下文中缺少API密钥信息")
 				utils.Unauthorized(w, "API密钥无效")
 				return
 			}
 			route, ok := ctx.Value(utils.RouteKey).(*models.Route)
 			if !ok {
-				logger.WithRequestLogCtx(ctx).Error("鉴权插件: 上下文中缺少路由信息")
+				logger.WithRequestLogCtx(ctx, r).Error("鉴权插件: 上下文中缺少路由信息")
 				utils.NotFound(w, "路由不存在")
 				return
 			}
 			if !utils.Contains(apiKeyInfo.RouteIDs, route.ID) {
-				logger.WithRequestLogCtx(ctx).Warn("鉴权插件: API密钥未授权访问该路由")
+				logger.WithRequestLogCtx(ctx, r).Warn("鉴权插件: API密钥未授权访问该路由")
 				utils.Forbidden(w, "API密钥无效")
 				return
 			}
