@@ -159,7 +159,7 @@ func proxyToNode(target string, w http.ResponseWriter, r *http.Request) (error, 
 				pr.Out.Header.Set("G-Timezone", loc.Timezone)
 			}
 			// 传递 UserAgent 信息
-			if ua, ok := ctx.Value(utils.UserAgentKey).(*models.UserAgent); ok && ua != nil {
+			if ua := utils.GetUserAgentInfo(pr.In); ua != nil {
 				pr.Out.Header.Set("User-Agent", ua.UserAgent)
 				pr.Out.Header.Set("G-Device", ua.Device)
 			}

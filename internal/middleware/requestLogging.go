@@ -31,10 +31,7 @@ func RequestLogging() Middleware {
 			path := r.URL.Path
 			status := wrapped.StatusCode
 			origin := r.Header.Get("Origin")
-			userAgent := models.UserAgent{}
-			if uaPtr, ok := ctx.Value(utils.UserAgentKey).(*models.UserAgent); ok && uaPtr != nil {
-				userAgent = *uaPtr
-			}
+			userAgent := utils.GetUserAgentInfo(r)
 			duration := time.Since(start)
 			durationNs := duration.Nanoseconds()
 			responseSize := int64(wrapped.Size)

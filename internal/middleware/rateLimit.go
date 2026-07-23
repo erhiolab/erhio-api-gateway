@@ -238,8 +238,8 @@ func RateLimit() Middleware {
 			if apiKeyInfoPtr, ok := ctx.Value(utils.ApiKeyInfoKey).(*models.APIKeyInfo); ok && apiKeyInfoPtr != nil {
 				apiKeyInfo = *apiKeyInfoPtr
 			}
-			ipLoc, ok := ctx.Value(utils.ClientIPKey).(*models.IPLocation)
-			if !ok || ipLoc == nil {
+			clientIP := utils.GetClientIP(r)
+			if clientIP == "" {
 				logger.WithRequestLogCtx(ctx, r).Warn("限流器插件: 客户端IP不存在")
 				utils.BadRequest(w, "客户端IP为空")
 				return
@@ -250,8 +250,8 @@ func RateLimit() Middleware {
 				qpsKey = prefix + ":qps"
 				qpmLimit = apiKeyInfo.QPM
 				qpsLimit = apiKeyInfo.QPS
-			} else if ipLoc != nil {
-				prefix := cfg.Redis.ProjectPrefix + ":limit:ip:" + ipLoc.IP
+			} else {
+				prefix := cfg.Redis.ProjectPrefix + ":limit:ip:" + clientIP
 				qpmKey = prefix + ":qpm"
 				qpsKey = prefix + ":qps"
 				qpmLimit = route.QPM
