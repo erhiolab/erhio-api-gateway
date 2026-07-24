@@ -279,7 +279,6 @@ func (p *BodyParser) StringsOpt(key string) []string {
 }
 
 // StringOrStrings 必填, 支持字符串或字符串数组
-// isArray 表示原始值是否是数组, 用于决定返回格式
 func (p *BodyParser) StringOrStrings(key string) ([]string, bool) {
 	if !p.ok {
 		return nil, false
@@ -355,6 +354,46 @@ func (p *BodyParser) Raw(key string) interface{} {
 		return nil
 	}
 	return p.data[key]
+}
+
+// Whitelist 白名单校验, 不在白名单中返回空字符串
+func (p *BodyParser) Whitelist(key string, whitelist []string, defaultVal ...string) string {
+	v, _ := p.data[key].(string)
+	if v == "" {
+		if len(defaultVal) > 0 {
+			return defaultVal[0]
+		}
+		return ""
+	}
+	for _, item := range whitelist {
+		if item == v {
+			return v
+		}
+	}
+	if len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+	return ""
+}
+
+// Blacklist 黑名单校验, 在黑名单中返回空字符串
+func (p *BodyParser) Blacklist(key string, blacklist []string, defaultVal ...string) string {
+	v, _ := p.data[key].(string)
+	if v == "" {
+		if len(defaultVal) > 0 {
+			return defaultVal[0]
+		}
+		return ""
+	}
+	for _, item := range blacklist {
+		if item == v {
+			if len(defaultVal) > 0 {
+				return defaultVal[0]
+			}
+			return ""
+		}
+	}
+	return v
 }
 
 // badRequest 设置错误状态并返回响应
