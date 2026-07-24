@@ -22,7 +22,7 @@ CREATE TABLE api_gateway_config
 DROP TABLE IF EXISTS `api_gateway_blacklist`;
 CREATE TABLE api_gateway_blacklist
 (
-	id          VARCHAR(255) PRIMARY KEY COMMENT '黑名单ID',
+	id          BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '黑名单 ID',
 	type        ENUM ('ip', 'domain', 'country') NOT NULL COMMENT '黑名单类型',
 	value       TEXT COMMENT '黑名单值',
 	description VARCHAR(255) DEFAULT NULL COMMENT '黑名单说明',

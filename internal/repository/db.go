@@ -238,8 +238,8 @@ func (db *DBManager) InsertBlacklist(blacklist *models.Blacklist) error {
 	cfg := config.Get()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.DB.WriteTimeout)*time.Second)
 	defer cancel()
-	query := `INSERT INTO api_gateway_blacklist (id, type, value, description) VALUES (?, ?, ?, ?)`
-	_, err := db.db.ExecContext(ctx, query, blacklist.ID, blacklist.Type, blacklist.Value, blacklist.Description)
+	query := `INSERT INTO api_gateway_blacklist (type, value, description) VALUES (?, ?, ?)`
+	_, err := db.db.ExecContext(ctx, query, blacklist.Type, blacklist.Value, blacklist.Description)
 	if err != nil {
 		logger.Log.Error("插入黑名单错误", zap.String("type", blacklist.Type), zap.String("value", blacklist.Value), zap.Error(err))
 		return err
