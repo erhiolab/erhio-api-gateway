@@ -88,9 +88,13 @@ func (app *App) MatchService(reqPath string) (*models.Service, string, error) {
 			if !ok {
 				continue
 			}
+			// 校验缓存数据的 BasePath 是否为空, 为空说明数据异常
+			if serviceWithNodes.BasePath == "" {
+				continue
+			}
 			newPath := reqPath
-			if service.BasePath != "/" && service.BasePath != "" {
-				newPath = reqPath[len(service.BasePath):]
+			if serviceWithNodes.BasePath != "/" {
+				newPath = reqPath[len(serviceWithNodes.BasePath):]
 				if newPath == "" {
 					newPath = "/"
 				}
