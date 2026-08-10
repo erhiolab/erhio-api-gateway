@@ -113,7 +113,7 @@ func (db *DBManager) GetServiceWithNodes(serviceID int64) (*models.Service, bool
 	defer cancel()
 	// 获取服务基本信息
 	var service models.Service
-	err := db.db.GetContext(ctx, &service, "SELECT id, name FROM services WHERE id = ?", serviceID)
+	err := db.db.GetContext(ctx, &service, "SELECT id, name, base_path FROM services WHERE id = ?", serviceID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, false, nil

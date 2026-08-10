@@ -6,6 +6,7 @@ import (
 	"elake-api-gateway/internal/models"
 	"errors"
 	"math/rand"
+	"path"
 	"strconv"
 	"time"
 
@@ -70,13 +71,15 @@ func (app *App) GetService(serviceID int64) (*models.Service, bool, error) {
 }
 
 // MatchService 匹配服务
-func (app *App) MatchService(path string) (*models.Service, string, error) {
+func (app *App) MatchService(reqPath string) (*models.Service, string, error) {
+	// 路径规范化: 清理 // 和 /../ 等, 防止路径绕过
+	reqPath = path.Clean(reqPath)
 	services, err := app.DB.GetAllServices()
 	if err != nil {
 		return nil, "", err
 	}
 	for _, service := range services {
-		if path == service.BasePath || len(service.BasePath) > 0 && len(path) > len(service.BasePath) && path[:len(service.BasePath)] == service.BasePath && path[len(service.BasePath)] == '/' {
+		if matchBasePath(reqPath, service.BasePath) {
 			// 从缓存中获取完整的服务信息
 			serviceWithNodes, ok, err := app.GetService(service.ID)
 			if err != nil {
@@ -85,9 +88,9 @@ func (app *App) MatchService(path string) (*models.Service, string, error) {
 			if !ok {
 				continue
 			}
-			newPath := path
-			if service.BasePath != "/" {
-				newPath = path[len(service.BasePath):]
+			newPath := reqPath
+			if service.BasePath != "/" && service.BasePath != "" {
+				newPath = reqPath[len(service.BasePath):]
 				if newPath == "" {
 					newPath = "/"
 				}
@@ -96,6 +99,28 @@ func (app *App) MatchService(path string) (*models.Service, string, error) {
 		}
 	}
 	return nil, "", nil
+}
+
+// matchBasePath 判断请求路径是否匹配服务的 BasePath
+func matchBasePath(reqPath, basePath string) bool {
+	// 空 BasePath 不匹配任何路径
+	if basePath == "" {
+		return false
+	}
+	// "/" 匹配所有路径
+	if basePath == "/" {
+		return true
+	}
+	// 精确匹配
+	if reqPath == basePath {
+		return true
+	}
+	// 前缀匹配: 路径以 BasePath 开头且下一个字符是 '/'
+	if len(reqPath) > len(basePath) &&
+		reqPath[:len(basePath)] == basePath && reqPath[len(basePath)] == '/' {
+		return true
+	}
+	return false
 }
 
 // ClearServiceCache 清除服务缓存
