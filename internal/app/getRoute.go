@@ -7,6 +7,7 @@ import (
 	"errors"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -70,25 +71,61 @@ func (app *App) GetRoute(routeID int64) (*models.Route, bool, error) {
 }
 
 // MatchRoute 匹配路由
-func (app *App) MatchRoute(serviceID int64, path string, method string) (*models.Route, error) {
+func (app *App) MatchRoute(serviceID int64, path string, method string) (*models.Route, map[string]string, error) {
 	routes, err := app.DB.GetAllRoutes()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	for _, route := range routes {
-		if route.ServiceID == serviceID && route.Path == path && route.Method == method {
-			// 从缓存中获取完整的路由信息
-			routeWithDetails, ok, err := app.GetRoute(route.ID)
-			if err != nil {
-				return nil, err
-			}
-			if !ok {
-				continue
-			}
-			return routeWithDetails, nil
+	var bestMatch *models.Route
+	var bestParams map[string]string
+	for i := range routes {
+		route := &routes[i]
+		if route.ServiceID != serviceID || route.Method != method {
+			continue
+		}
+		params, ok := matchPath(route.Path, path)
+		if !ok {
+			continue
+		}
+		if len(params) == 0 {
+			bestMatch = route
+			bestParams = params
+			break
+		}
+		if bestMatch == nil {
+			bestMatch = route
+			bestParams = params
 		}
 	}
-	return nil, nil
+	if bestMatch == nil {
+		return nil, nil, nil
+	}
+	routeWithDetails, ok, err := app.GetRoute(bestMatch.ID)
+	if err != nil || !ok {
+		return nil, nil, err
+	}
+	return routeWithDetails, bestParams, nil
+}
+
+// matchPath 匹配路径模式
+func matchPath(pattern, path string) (map[string]string, bool) {
+	if pattern == path {
+		return map[string]string{}, true
+	}
+	patternParts := strings.Split(strings.Trim(pattern, "/"), "/")
+	pathParts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(patternParts) != len(pathParts) {
+		return nil, false
+	}
+	params := make(map[string]string)
+	for i, pp := range patternParts {
+		if strings.HasPrefix(pp, ":") {
+			params[pp[1:]] = pathParts[i]
+		} else if pp != pathParts[i] {
+			return nil, false
+		}
+	}
+	return params, true
 }
 
 // ClearRouteCache 清除路由缓存

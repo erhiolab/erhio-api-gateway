@@ -228,5 +228,5 @@ VALUES ('auth.master-key', 'auth', 'string', 'b8757330c18fe65a8ce7b0733355e292',
 		1),
 	   ('auth.nonce-window-hour', 'auth', 'int', '24', 'nonce 唯一性校验窗口(小时)',
 		'默认24小时, 用于校验请求nonce是否在24小时内', 1),
-	   ('auth.qps-limit', 'auth', 'int', '5', '每秒最大请求数', '默认5次, 用于限制每秒请求数', 1),
+	   ('auth.qps-limit', 'auth', 'int', '10', '每秒最大请求数', '默认10次, 用于限制每秒请求数', 1),
 	   ('auth.qpm-limit', 'auth', 'int', '150', '每分钟最大请求数', '默认150次, 用于限制每分钟请求数', 1);

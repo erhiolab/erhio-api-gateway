@@ -25,7 +25,7 @@ func Router(app *app.App) Middleware {
 				return
 			}
 			// 匹配 Route
-			route, err := app.MatchRoute(service.ID, newPath, r.Method)
+			route, params, err := app.MatchRoute(service.ID, newPath, r.Method)
 			if err != nil || route == nil || !route.Enabled {
 				logger.WithRequestLogCtx(ctx, r).Warn("路由插件: 路由未找到",
 					zap.Error(err),
@@ -35,6 +35,7 @@ func Router(app *app.App) Middleware {
 			}
 			ctx = context.WithValue(ctx, utils.ServiceKey, service)
 			ctx = context.WithValue(ctx, utils.RouteKey, route)
+			ctx = context.WithValue(ctx, utils.RouteParamsKey, params)
 			ctx = context.WithValue(ctx, utils.UpstreamPathKey, newPath)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

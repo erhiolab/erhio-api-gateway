@@ -10,6 +10,8 @@ const (
 	ServiceKey contextKey = "service"
 	// UpstreamPathKey 上游路径键
 	UpstreamPathKey contextKey = "upstream_path"
+	// RouteParamsKey 路由参数键
+	RouteParamsKey contextKey = "route_params"
 	// SelectedNodeKey 选中节点键
 	SelectedNodeKey contextKey = "selected_node"
 	// RequestIDKey 请求ID键
