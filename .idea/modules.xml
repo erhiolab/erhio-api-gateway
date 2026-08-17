@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/elake-api-gateway.iml" filepath="$PROJECT_DIR$/.idea/elake-api-gateway.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/erhio-api-gateway.iml" filepath="$PROJECT_DIR$/.idea/erhio-api-gateway.iml" />
     </modules>
   </component>
 </project>
